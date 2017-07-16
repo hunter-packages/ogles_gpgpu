@@ -23,10 +23,18 @@ namespace ogles_gpgpu {
  */
 class Yuv2RgbProc : public FilterProcBase {
 public:
+
+    enum YUVKind
+    {
+        k601VideoRange,
+        k601FullRange,
+        k709Default
+    };
+    
     /**
      * Constructor.
      */
-    Yuv2RgbProc();
+    Yuv2RgbProc(YUVKind=k601VideoRange);
 
     /**
      * Return the processors name.
@@ -59,8 +67,6 @@ private:
     static const char* vshaderYuv2RgbSrc; // fragment shader source
     static const char* fshaderYuv2RgbSrc; // fragment shader source
 
-    //GLProgram *yuvConversionProgram;
-
     GLuint luminanceTexture;
     GLuint chrominanceTexture;
 
@@ -72,6 +78,8 @@ private:
     GLint yuvConversionMatrixUniform;
 
     const GLfloat* _preferredConversion;
+
+    YUVKind yuvKind = k601VideoRange;
 };
 }
 

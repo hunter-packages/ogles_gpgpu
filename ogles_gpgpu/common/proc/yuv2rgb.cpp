@@ -40,18 +40,6 @@ GLfloat* kColorConversion601 = kColorConversion601Default;
 GLfloat* kColorConversion601FullRange = kColorConversion601FullRangeDefault;
 GLfloat* kColorConversion709 = kColorConversion709Default;
 
-void setColorConversion601(GLfloat conversionMatrix[9]) {
-    kColorConversion601 = conversionMatrix;
-}
-
-void setColorConversion601FullRange(GLfloat conversionMatrix[9]) {
-    kColorConversion601FullRange = conversionMatrix;
-}
-
-void setColorConversion709(GLfloat conversionMatrix[9]) {
-    kColorConversion709 = conversionMatrix;
-}
-
 // clang-format off
 const char *kGPUImageYUVVideoRangeConversionForRGFragmentShaderString = 
 #if defined(OGLES_GPGPU_OPENGLES)
@@ -132,8 +120,13 @@ OG_TO_STR(
 
 // =================================================================================
 
-Yuv2RgbProc::Yuv2RgbProc() {
-    _preferredConversion = kColorConversion601FullRange;
+Yuv2RgbProc::Yuv2RgbProc(YUVKind kind)
+{
+    switch(kind) {
+        case 0: _preferredConversion = kColorConversion601; break;
+        case 1: _preferredConversion = kColorConversion601FullRange; break;
+        case 2: _preferredConversion = kColorConversion709; break;
+    }
 
     texTarget = GL_TEXTURE_2D;
 }
@@ -144,7 +137,6 @@ void Yuv2RgbProc::setTextures(GLuint luminance, GLuint chrominance) {
 }
 
 void Yuv2RgbProc::filterShaderSetup(const char* vShaderSrc, const char* fShaderSrc, GLenum target) {
-    //FilterProcBase::filterShaderSetup(vShaderSrc, fShaderSrc, target);
 
     ProcBase::createShader(vShaderSrc, fShaderSrc, target);
     Tools::checkGLErr(getProcName(), "createShader()");
@@ -174,8 +166,17 @@ int Yuv2RgbProc::init(int inW, int inH, unsigned int order, bool prepareForExter
     baseInit(inW, inH, order, prepareForExternalInput, procParamOutW, procParamOutH, procParamOutScale);
 
     // FilterProcBase init - create shaders, get shader params, set buffers for OpenGL
-    filterInit(FilterProcBase::vshaderDefault, kGPUImageYUVFullRangeConversionForLAFragmentShaderString);
-
+    switch(yuvKind) {
+    case k601FullRange :
+        filterInit(FilterProcBase::vshaderDefault, kGPUImageYUVFullRangeConversionForLAFragmentShaderString);
+        break;
+        
+    case k601VideoRange :
+    default :
+        filterInit(FilterProcBase::vshaderDefault, kGPUImageYUVVideoRangeConversionForLAFragmentShaderString);
+        break;
+    }
+    
     return 1;
 }
 
@@ -184,9 +185,6 @@ void Yuv2RgbProc::filterRenderPrepare() {
 
     // set the viewport
     glViewport(0, 0, outFrameW, outFrameH);
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, luminanceTexture);

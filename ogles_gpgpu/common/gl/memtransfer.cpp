@@ -22,9 +22,9 @@ bool MemTransfer::initPlatformOptimizations() {
 #pragma mark constructor/deconstructor
 
 #if ANDROID
-#define DFLT_TEXTURE_FORMAT GL_RGBA
+#  define DFLT_TEXTURE_FORMAT GL_RGBA
 #else
-#define DFLT_TEXTURE_FORMAT GL_BGRA
+#  define DFLT_TEXTURE_FORMAT GL_BGRA
 #endif
 
 MemTransfer::MemTransfer() {
@@ -156,13 +156,67 @@ void MemTransfer::toGPU(const unsigned char* buf) {
 void MemTransfer::fromGPU(unsigned char* buf) {
     assert(preparedOutput && outputTexId > 0 && buf);
 
+#if defined(OGLES_GPGPU_OPENGL_ES3)
+
+    GLuint pbo_id;
+
+    size_t pbo_size = outputW * outputH * 4;    
+
+    // TODO: Reuse PBO, put side-by-side with FBO
+    
+    // ::::::: allocate ::::::::::
+    glGenBuffers(1, &pbo_id);
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+    
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo_id);
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+    
+    glBufferData(GL_PIXEL_PACK_BUFFER, pbo_size, 0, GL_DYNAMIC_READ);
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+
+    // ::::::::: read ::::::::::::
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo_id);
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+    
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+
+    // Note glReadPixels last argument == 0 for PBO reads
+    glReadPixels(0, 0,outputW, outputH, GL_RGBA, GL_UNSIGNED_BYTE, 0); // GL_BGRA
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+    
+#if defined(OGLES_GPGPU_OSX)
+    // TODO: glMapBufferRange does not seem to work in OS X
+    GLubyte *ptr = static_cast<GLubyte *>(glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY));
+#else
+    GLubyte *ptr = static_cast<GLubyte *>(glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, pbo_size, GL_MAP_READ_BIT));
+#endif
+    Tools::checkGLErr("MemTransfer", "fromGPU");    
+    
+    memcpy(buf, ptr, pbo_size);
+
+    glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+    Tools::checkGLErr("MemTransfer", "fromGPU");    
+    
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+
+    glDeleteBuffers(1, &pbo_id);
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+    
+#else
+    
     glBindTexture(GL_TEXTURE_2D, outputTexId);
 
     // default (and slow) way using glReadPixels:
     glReadPixels(0, 0, outputW, outputH, outputPixelFormat, GL_UNSIGNED_BYTE, buf);
 
-    // check for error
-    Tools::checkGLErr("MemTransfer", "fromGPU (glReadPixels)");
+    Tools::checkGLErr("MemTransfer", "fromGPU");    
+#endif
+
 }
 
 // The zero copy fromGPU() call is not possibly with generic glReadPixels() access

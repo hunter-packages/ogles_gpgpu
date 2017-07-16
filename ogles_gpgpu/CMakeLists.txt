@@ -32,8 +32,17 @@ elseif(ANDROID)
   find_package(Android REQUIRED)
   find_package(Log REQUIRED)
   find_package(EGL REQUIRED)
-  find_package(OpenGLES2 REQUIRED)
-  target_link_libraries(ogles_gpgpu PUBLIC log android EGL GLESv2)
+
+  if(OGLES_GPGPU_OPENGL_ES3)
+    find_package(OpenGLES3 REQUIRED)
+    set(ogles_gpgpu_opengl_lib GLESv3)
+  else()
+    find_package(OpenGLES2 REQUIRED)
+    set(ogles_gpgpu_opengl_lib GLESv2)
+  endif()
+  target_link_libraries(ogles_gpgpu PUBLIC log android EGL ${ogles_gpgpu_opengl_lib})
+
+  
   target_compile_definitions(ogles_gpgpu PUBLIC EGL_EGLEXT_PROTOTYPES GL_GLEXT_PROTOTYPES)
 else()
 
@@ -79,7 +88,11 @@ else()
     set_property(TARGET ogles_gpgpu_cpu PROPERTY FOLDER "libs/ogles_gpgpu")
     target_include_directories(
       ogles_gpgpu_cpu PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
-      )    
+      )
+
+    if(OGLES_GPGPU_OPENGL_ES3)    
+      target_compile_definitions(ogles_gpgpu_cpu PUBLIC OGLES_GPGPU_OPENGL_ES3=1)
+    endif()
     
   endif()
 
@@ -100,7 +113,11 @@ endif()
 set_property(TARGET ogles_gpgpu PROPERTY FOLDER "libs/ogles_gpgpu")
 target_include_directories(
     ogles_gpgpu PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
-)
+    )
+
+if(OGLES_GPGPU_OPENGL_ES3)    
+  target_compile_definitions(ogles_gpgpu PUBLIC OGLES_GPGPU_OPENGL_ES3=1)
+endif()
 
 ## #################################################################
 ## Testing: 

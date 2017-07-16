@@ -1,3 +1,7 @@
+#ifdef NDEBUG
+#  undef NDEBUG
+#endif
+
 #include <aglet/aglet.h>
 #include <aglet/GLContext.h>
 
@@ -67,16 +71,25 @@ int gauze_main(int argc, char** argv) {
 }
 
 struct GLTexture {
-    GLTexture(std::size_t width, std::size_t height, GLenum texType, void* data) {
+    GLTexture(std::size_t width, std::size_t height, GLenum texType, void* data, GLint texFormat = GL_RGBA) {
         glGenTextures(1, &texId);
+        assert(glGetError() == GL_NO_ERROR);
+
         glBindTexture(GL_TEXTURE_2D, texId);
+        assert(glGetError() == GL_NO_ERROR);
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        assert(glGetError() == GL_NO_ERROR);
+        
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, texType, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, texFormat, width, height, 0, texType, GL_UNSIGNED_BYTE, data);
+        assert(glGetError() == GL_NO_ERROR);
+        
         glBindTexture(GL_TEXTURE_2D, 0);
+        assert(glGetError() == GL_NO_ERROR);
     }
 
     ~GLTexture() {
@@ -123,13 +136,15 @@ static cv::Mat getTestImage(int width, int height, int stripe, bool alpha) {
 
 static int gWidth = 640;
 static int gHeight = 480;
+static aglet::GLContext::GLVersion gVersion = aglet::GLContext::kGLES30;
 
 #if !defined(_WIN32) && !defined(_WIN64)
 // vs-14-2015 GLSL reports the following error due to internal preprocessor #define
 // > could not compile shader program.  error log:
 // > 0:1(380): preprocessor error: syntax error, unexpected HASH_TOKEN
 TEST(OGLESGPGPUTest, MedianProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     if(context && *context) {
         cv::Mat test = getTestImage(gWidth, gHeight, 20, true);
@@ -154,36 +169,55 @@ TEST(OGLESGPGPUTest, MedianProc) {
 }
 #endif
 
-#if !defined(ANDROID)
-// glTexImage2D w/ GL_LUMINANCE or GL_LUMINANCE_ALPHA report error 1282 in tests w/ android-ndk-r10e-api-19
-// TODO: The GL_RED_EXT seems to be available in >= android-21
 TEST(OGLESGPGPUTest, Yuv2RgbProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();    
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);
     if (context && *context) {
-        static const int width = 640, height = 480;
 
         cv::Mat green(1, 1, CV_8UC3, cv::Scalar(0, 255, 0)), yuv;
         cv::cvtColor(green, yuv, cv::COLOR_BGR2YUV);
         cv::Vec3b& value = yuv.at<cv::Vec3b>(0, 0);
 
         // Create constant color buffers:
-        std::vector<std::uint8_t> y(width * height, value[0]), uv(width * height / 2);
+        std::vector<std::uint8_t> y(gWidth * gHeight, value[0]), uv(gWidth * gHeight / 2);
         for (int i = 0; i < uv.size(); i += 2) {
             uv[i + 0] = value[1];
             uv[i + 1] = value[2];
         }
 
+#if defined(OGLES_GPGPU_OPENGL_ES3)
         // Luminance texture:
-        GLTexture luminanceTexture(gWidth, gHeight, GL_LUMINANCE, y.data());
+        GLTexture luminanceTexture(gWidth, gHeight, GL_RED, y.data(), GL_R8);
+        ASSERT_EQ(glGetError(), GL_NO_ERROR);
+        
+        // Chrominance texture (interleaved):
+        GLTexture chrominanceTexture(gWidth / 2, gHeight / 2, GL_RG, uv.data(), GL_RG8);
+        ASSERT_EQ(glGetError(), GL_NO_ERROR);
+#else
+        // Luminance texture:
+        GLTexture luminanceTexture(gWidth, gHeight, GL_LUMINANCE, y.data(), GL_LUMINANCE);
         ASSERT_EQ(glGetError(), GL_NO_ERROR);
 
         // Chrominance texture (interleaved):
-        GLTexture chrominanceTexture(width / 2, height / 2, GL_LUMINANCE_ALPHA, uv.data());
+        GLTexture chrominanceTexture(gWidth / 2, gHeight / 2, GL_LUMINANCE_ALPHA, uv.data(), GL_LUMINANCE_ALPHA);
         ASSERT_EQ(glGetError(), GL_NO_ERROR);
+#endif
 
-        ogles_gpgpu::Yuv2RgbProc yuv2rgb;
+        // TODO: Resolve GPUImage vs OpenCV coefficients
+        
+        // k601FullRange
+        //1: BGR [0, 255, 0]
+        //1: YUV [150, 54, 0]
+        //1: MU: [0, 250, 4, 255]
+
+        // k601VideoRange
+        //1: BGR [0, 255, 0]
+        //1: YUV [150, 54, 0]
+        //1: MU: [0, 255, 8, 255]
+        
+        ogles_gpgpu::Yuv2RgbProc yuv2rgb(ogles_gpgpu::Yuv2RgbProc::k601VideoRange);
         yuv2rgb.init(gWidth, gHeight, 0, true);
         yuv2rgb.setExternalInputDataFormat(0); // for yuv
         yuv2rgb.getMemTransferObj()->setOutputPixelFormat(TEXTURE_FORMAT);
@@ -195,16 +229,16 @@ TEST(OGLESGPGPUTest, Yuv2RgbProc) {
         getImage(yuv2rgb, result);
         ASSERT_FALSE(result.empty());
 
-        //auto mu = cv::mean(result);
-        //ASSERT_EQ(mu[0], 0);
-        //ASSERT_EQ(mu[1], 255);
-        //ASSERT_EQ(mu[2], 0);
+        auto mu = cv::mean(result);
+        ASSERT_LE(mu[0], 4);
+        ASSERT_GE(mu[1], 250);
+        ASSERT_LE(mu[2], 4);
     }
 }
-#endif
 
 TEST(OGLESGPGPUTest, GrayScaleProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     if (context && *context) {
         cv::Mat test = getTestImage(640, 480, 10, true);
@@ -222,7 +256,8 @@ TEST(OGLESGPGPUTest, GrayScaleProc) {
 }
 
 TEST(OGLESGPGPUTest, AdaptThreshProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -241,7 +276,8 @@ TEST(OGLESGPGPUTest, AdaptThreshProc) {
 }
 
 TEST(OGLESGPGPUTest, GainProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -262,7 +298,8 @@ TEST(OGLESGPGPUTest, GainProc) {
 }
 
 TEST(OGLESGPGPUTest, BlendProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -290,7 +327,8 @@ TEST(OGLESGPGPUTest, BlendProc) {
 }
 
 TEST(OGLESGPGPUTest, FIFOProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -313,7 +351,8 @@ TEST(OGLESGPGPUTest, FIFOProc) {
 }
 
 TEST(OGLESGPGPUTest, TransformProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -346,7 +385,8 @@ TEST(OGLESGPGPUTest, TransformProc) {
 }
 
 TEST(OGLESGPGPUTest, DiffProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -373,7 +413,8 @@ TEST(OGLESGPGPUTest, DiffProc) {
 }
 
 TEST(OGLESGPGPUTest, GaussianProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -394,7 +435,8 @@ TEST(OGLESGPGPUTest, GaussianProc) {
 }
 
 TEST(OGLESGPGPUTest, GaussianOptProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -414,7 +456,8 @@ TEST(OGLESGPGPUTest, GaussianOptProc) {
 }
 
 TEST(OGLESGPGPUTest, BoxOptProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -434,7 +477,8 @@ TEST(OGLESGPGPUTest, BoxOptProc) {
 }
 
 TEST(OGLESGPGPUTest, HessianProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -465,7 +509,8 @@ TEST(OGLESGPGPUTest, HessianProc) {
 }
 
 TEST(OGLESGPGPUTest, LbpProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -485,7 +530,8 @@ TEST(OGLESGPGPUTest, LbpProc) {
 }
 
 TEST(OGLESGPGPUTest, Fir3Proc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -530,7 +576,8 @@ TEST(OGLESGPGPUTest, Fir3Proc) {
 }
 
 TEST(OGLESGPGPUTest, GradProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -550,7 +597,8 @@ TEST(OGLESGPGPUTest, GradProc) {
 }
 
 TEST(OGLESGPGPUTest, LowPassProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -576,7 +624,8 @@ TEST(OGLESGPGPUTest, LowPassProc) {
 }
 
 TEST(OGLESGPGPUTest, HighPassProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -602,7 +651,8 @@ TEST(OGLESGPGPUTest, HighPassProc) {
 }
 
 TEST(OGLESGPGPUTest, ThreshProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -622,7 +672,8 @@ TEST(OGLESGPGPUTest, ThreshProc) {
 }
 
 TEST(OGLESGPGPUTest, PyramidProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -642,7 +693,8 @@ TEST(OGLESGPGPUTest, PyramidProc) {
 }
 
 TEST(OGLESGPGPUTest, IxytProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -674,7 +726,8 @@ TEST(OGLESGPGPUTest, IxytProc) {
 }
 
 TEST(OGLESGPGPUTest, TensorProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -694,7 +747,8 @@ TEST(OGLESGPGPUTest, TensorProc) {
 }
 
 TEST(OGLESGPGPUTest, ShiTomasiProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -727,7 +781,8 @@ TEST(OGLESGPGPUTest, ShiTomasiProc) {
 }
 
 TEST(OGLESGPGPUTest, HarrisProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -760,7 +815,8 @@ TEST(OGLESGPGPUTest, HarrisProc) {
 }
 
 TEST(OGLESGPGPUTest, NmsProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -793,7 +849,8 @@ TEST(OGLESGPGPUTest, NmsProc) {
 }
 
 TEST(OGLESGPGPUTest, FlowProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -821,7 +878,8 @@ TEST(OGLESGPGPUTest, FlowProc) {
 }
 
 TEST(OGLESGPGPUTest, Rgb2HsvProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -841,7 +899,8 @@ TEST(OGLESGPGPUTest, Rgb2HsvProc) {
 }
 
 TEST(OGLESGPGPUTest, Hsv2RgbProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
@@ -861,7 +920,8 @@ TEST(OGLESGPGPUTest, Hsv2RgbProc) {
 }
 
 TEST(OGLESGPGPUTest, LNormProc) {
-    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight); (*context)();
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
     ASSERT_TRUE(context && (*context));
     ASSERT_EQ(glGetError(), GL_NO_ERROR);    
     if (context && *context) {
