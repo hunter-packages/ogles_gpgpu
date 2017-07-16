@@ -10,12 +10,7 @@
 #include "memtransfer_factory.h"
 #include "../core.h"
 
-//#ifdef __APPLE__
-//#include "../../platform/ios/memtransfer_ios.h"
-//#elif __ANDROID__
-//#include "../../platform/android/memtransfer_android.h"
-//#endif
-
+// clang-off
 #if defined(OGLES_GPGPU_IOS) && !defined(OGLES_GPGPU_OPENGL_ES3)
 #  include "../../platform/ios/memtransfer_ios.h"
 #elif defined(OGLES_GPGPU_ANDROID) && !defined(OGLES_GPGPU_OPENGL_ES3)
@@ -23,6 +18,7 @@
 #else
 #  include "../../platform/opengl/memtransfer_generic.h"
 #endif
+// clang-on
 
 using namespace ogles_gpgpu;
 
