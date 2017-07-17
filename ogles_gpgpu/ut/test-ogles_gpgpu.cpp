@@ -19,6 +19,8 @@
 #endif
 // clang-format off
 
+#define OGLES_GPGPU_DEBUG_YUV 1
+
 #include "../common/gl/memtransfer_optimized.h"
 
 // clang-format off
@@ -191,33 +193,26 @@ TEST(OGLESGPGPUTest, Yuv2RgbProc) {
         // Luminance texture:
         GLTexture luminanceTexture(gWidth, gHeight, GL_RED, y.data(), GL_R8);
         ASSERT_EQ(glGetError(), GL_NO_ERROR);
-        
+        std::cout << "ES3 k601VideoRange kRG" << std::endl;
+
         // Chrominance texture (interleaved):
         GLTexture chrominanceTexture(gWidth / 2, gHeight / 2, GL_RG, uv.data(), GL_RG8);
         ASSERT_EQ(glGetError(), GL_NO_ERROR);
+        
+        ogles_gpgpu::Yuv2RgbProc yuv2rgb(ogles_gpgpu::Yuv2RgbProc::k601VideoRange, ogles_gpgpu::Yuv2RgbProc::kRG);
 #else
         // Luminance texture:
         GLTexture luminanceTexture(gWidth, gHeight, GL_LUMINANCE, y.data(), GL_LUMINANCE);
         ASSERT_EQ(glGetError(), GL_NO_ERROR);
+        std::cout << "ES2 k601VideoRange kLA" << std::endl;
 
         // Chrominance texture (interleaved):
         GLTexture chrominanceTexture(gWidth / 2, gHeight / 2, GL_LUMINANCE_ALPHA, uv.data(), GL_LUMINANCE_ALPHA);
         ASSERT_EQ(glGetError(), GL_NO_ERROR);
+        
+        ogles_gpgpu::Yuv2RgbProc yuv2rgb(ogles_gpgpu::Yuv2RgbProc::k601VideoRange, ogles_gpgpu::Yuv2RgbProc::kLA);
 #endif
 
-        // TODO: Resolve GPUImage vs OpenCV coefficients
-        
-        // k601FullRange
-        //1: BGR [0, 255, 0]
-        //1: YUV [150, 54, 0]
-        //1: MU: [0, 250, 4, 255]
-
-        // k601VideoRange
-        //1: BGR [0, 255, 0]
-        //1: YUV [150, 54, 0]
-        //1: MU: [0, 255, 8, 255]
-        
-        ogles_gpgpu::Yuv2RgbProc yuv2rgb(ogles_gpgpu::Yuv2RgbProc::k601VideoRange);
         yuv2rgb.init(gWidth, gHeight, 0, true);
         yuv2rgb.setExternalInputDataFormat(0); // for yuv
         yuv2rgb.getMemTransferObj()->setOutputPixelFormat(TEXTURE_FORMAT);
@@ -225,12 +220,34 @@ TEST(OGLESGPGPUTest, Yuv2RgbProc) {
         yuv2rgb.setTextures(luminanceTexture, chrominanceTexture);
         yuv2rgb.render();
 
+
         cv::Mat result;
         getImage(yuv2rgb, result);
         ASSERT_FALSE(result.empty());
-
+        
         auto mu = cv::mean(result);
-        ASSERT_LE(mu[0], 4);
+        
+#if OGLES_GPGPU_DEBUG_YUV
+        ogles_gpgpu::GainProc yProc;
+        yProc.prepare(gWidth, gHeight);
+        yProc.process(luminanceTexture, 1, GL_TEXTURE_2D);
+        cv::Mat yProcOut;
+        getImage(yProc, yProcOut);
+        
+        ogles_gpgpu::GainProc uvProc;
+        uvProc.prepare(gWidth, gHeight);
+        uvProc.process(chrominanceTexture, 1, GL_TEXTURE_2D);
+        cv::Mat uvProcOut;
+        getImage(uvProc, uvProcOut);
+        
+        std::cout << "yuv_in  : " << value << std::endl;
+        std::cout << "rgb_out : " << mu << std::endl;
+        std::cout << "y_      : " << cv::mean(yProcOut) << std::endl;
+        std::cout << "uv_     : " << cv::mean(uvProcOut) << std::endl;
+        std::cout << "Format: " << int(yProc.getMemTransferObj()->getOutputPixelFormat()) << std::endl;
+#endif // OGLES_GPGPU_DEBUG_YUV
+        
+        ASSERT_LE(mu[0], 8);
         ASSERT_GE(mu[1], 250);
         ASSERT_LE(mu[2], 8);
     }

@@ -24,8 +24,12 @@ namespace ogles_gpgpu {
 class Yuv2RgbProc : public FilterProcBase {
 public:
 
-    enum YUVKind
-    {
+    enum ChannelKind {
+        kLA, // typically ES 2.0
+        kRG, // typically ES 3.0
+    };
+    
+    enum YUVKind {
         k601VideoRange,
         k601FullRange,
         k709Default
@@ -34,7 +38,7 @@ public:
     /**
      * Constructor.
      */
-    Yuv2RgbProc(YUVKind=k601VideoRange);
+    Yuv2RgbProc(YUVKind yuvKind=k601VideoRange, ChannelKind channelKind=kLA);
 
     /**
      * Return the processors name.
@@ -80,6 +84,7 @@ private:
     const GLfloat* _preferredConversion;
 
     YUVKind yuvKind = k601VideoRange;
+    ChannelKind channelKind = kLA;
 };
 }
 
