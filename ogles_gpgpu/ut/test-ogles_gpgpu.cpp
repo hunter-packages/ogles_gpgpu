@@ -232,7 +232,7 @@ TEST(OGLESGPGPUTest, Yuv2RgbProc) {
         auto mu = cv::mean(result);
         ASSERT_LE(mu[0], 4);
         ASSERT_GE(mu[1], 250);
-        ASSERT_LE(mu[2], 4);
+        ASSERT_LE(mu[2], 8);
     }
 }
 
