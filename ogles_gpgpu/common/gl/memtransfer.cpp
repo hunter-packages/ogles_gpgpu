@@ -117,6 +117,23 @@ GLuint MemTransfer::prepareOutput(int outTexW, int outTexH) {
 
     Tools::checkGLErr("MemTransfer", "fbo texture creation");
 
+#if defined(OGLES_GPGPU_OPENGL_ES3)
+    // ::::::: allocate ::::::::::
+    size_t pbo_size = outputW * outputH * 4;
+    
+    glGenBuffers(1, &pbo);
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+    
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+    
+    glBufferData(GL_PIXEL_PACK_BUFFER, pbo_size, 0, GL_DYNAMIC_READ);
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+    
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    Tools::checkGLErr("MemTransfer", "fromGPU");
+#endif // OGLES_GPGPU_OPENGL_ES3
+    
     // done
     preparedOutput = true;
 
@@ -135,6 +152,14 @@ void MemTransfer::releaseOutput() {
         glDeleteTextures(1, &outputTexId);
         outputTexId = 0;
     }
+    
+#if defined(OGLES_GPGPU_OPENGL_ES3)
+    if (pbo > 0) {
+        glDeleteBuffers(1, &pbo);
+        pbo = 0;
+    }
+#endif
+    
 }
 
 void MemTransfer::toGPU(const unsigned char* buf) {
@@ -157,28 +182,11 @@ void MemTransfer::fromGPU(unsigned char* buf) {
     assert(preparedOutput && outputTexId > 0 && buf);
 
 #if defined(OGLES_GPGPU_OPENGL_ES3)
-
-    GLuint pbo_id;
-
     size_t pbo_size = outputW * outputH * 4;    
 
     // TODO: Reuse PBO, put side-by-side with FBO
-    
-    // ::::::: allocate ::::::::::
-    glGenBuffers(1, &pbo_id);
-    Tools::checkGLErr("MemTransfer", "fromGPU");
-    
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo_id);
-    Tools::checkGLErr("MemTransfer", "fromGPU");
-    
-    glBufferData(GL_PIXEL_PACK_BUFFER, pbo_size, 0, GL_DYNAMIC_READ);
-    Tools::checkGLErr("MemTransfer", "fromGPU");
-
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-    Tools::checkGLErr("MemTransfer", "fromGPU");
-
     // ::::::::: read ::::::::::::
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo_id);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
     Tools::checkGLErr("MemTransfer", "fromGPU");
     
     glReadBuffer(GL_COLOR_ATTACHMENT0);
@@ -204,9 +212,8 @@ void MemTransfer::fromGPU(unsigned char* buf) {
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
     Tools::checkGLErr("MemTransfer", "fromGPU");
 
-    glDeleteBuffers(1, &pbo_id);
+    glDeleteBuffers(1, &pbo);
     Tools::checkGLErr("MemTransfer", "fromGPU");
-    
 #else
     
     glBindTexture(GL_TEXTURE_2D, outputTexId);

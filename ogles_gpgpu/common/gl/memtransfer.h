@@ -174,6 +174,10 @@ protected:
     GLenum outputPixelFormat;
 
     bool useRawPixels = false;
+    
+#if defined(OGLES_GPGPU_OPENGL_ES3)
+    GLuint pbo;
+#endif
 };
 }
 
