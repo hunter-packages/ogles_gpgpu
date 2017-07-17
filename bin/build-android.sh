@@ -3,8 +3,9 @@
 TOOLCHAIN=android-ndk-r10e-api-19-armeabi-v7a-neon
 CONFIG=Release
 
+echo "ARGC: ${#}"
 OGLES_GPGPU_OPENGL_ES3="OFF"
-if [[ "$#" -gt 1 ]] ; then
+if [[ "$#" -gt 0 ]] ; then
     OGLES_GPGPU_OPENGL_ES3="ON"
 fi
 
