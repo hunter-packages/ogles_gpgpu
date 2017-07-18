@@ -15,10 +15,14 @@
 #define OGLES_GPGPU_COMMON_GL_MEMTRANSFER
 
 #include "../common_includes.h"
+
 #include <functional>
+#include <memory>
 
 namespace ogles_gpgpu {
 
+class FBO;
+    
 /**
  * MemTransfer handles memory transfer and mapping between CPU and GPU memory space.
  * Input (from CPU to GPU space) and output (from GPU to CPU space) can be set up
@@ -176,7 +180,9 @@ protected:
     bool useRawPixels = false;
     
 #if defined(OGLES_GPGPU_OPENGL_ES3)
-    GLuint pbo;
+    FBO *fbo = nullptr;
+    GLuint pboRead;
+    GLuint pboWrite;
 #endif
 };
 }
