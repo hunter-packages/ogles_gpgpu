@@ -32,7 +32,7 @@ public:
     /**
      * Constructor.
      */
-    FBO();
+    FBO(bool forOutput=true);
 
     /**
      * Deconstructor.
@@ -84,6 +84,11 @@ public:
      */
     void unbind();
 
+    /**
+     * Attach a pre-existing texture to the framebuffer.
+     */
+    virtual void attach(GLuint texId, GLenum attachment = GL_COLOR_ATTACHMENT0, GLenum target = GL_TEXTURE_2D);
+    
     /**
      * Will create a framebuffer output texture with texture id <attachedTexId>
      * and will bind it to this FBO.
@@ -140,7 +145,7 @@ protected:
 
     Core* core; // Core singleton
 
-    MemTransfer* memTransfer; // MemTransfer object associated with this FBO
+    MemTransfer* memTransfer = nullptr; // MemTransfer object associated with this FBO
 
     GLuint id; // OpenGL FBO id
     GLuint glTexUnit; // GL texture unit (to be used in glActiveTexture()) for output texture
