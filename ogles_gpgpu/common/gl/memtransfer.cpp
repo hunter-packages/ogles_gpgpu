@@ -75,16 +75,18 @@ GLuint MemTransfer::prepareInput(int inTexW, int inTexH, GLenum inputPxFormat, v
         return 0;
     }
 
-#if defined(OGLES_GPGPU_OPENGL_ES3)
     glBindTexture(GL_TEXTURE_2D, inputTexId);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#if defined(OGLES_GPGPU_OPENGL_ES3)    
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, inputW, inputH, 0, inputPixelFormat, GL_UNSIGNED_BYTE, nullptr);
+#endif
     glBindTexture(GL_TEXTURE_2D, 0);
-    
+        
+#if defined(OGLES_GPGPU_OPENGL_ES3)
     // ::::::: allocate ::::::::::
     size_t pbo_size = inputW * inputH * 4;
     
@@ -102,8 +104,7 @@ GLuint MemTransfer::prepareInput(int inTexW, int inTexH, GLenum inputPxFormat, v
     
     static const bool forOutput = false;
     fbo = new FBO(forOutput);
-#endif // OGLES_GPGPU_OPENGL_ES3
-
+#endif
     // done
     preparedInput = true;
 
