@@ -203,17 +203,21 @@ void FilterProcBase::filterRenderPrepare() {
 
     // set the viewport
     glViewport(0, 0, outFrameW, outFrameH);
-
-    glClear(GL_COLOR_BUFFER_BIT);
+    Tools::checkGLErr(getProcName(), "a");
+    
+    //glClear(GL_COLOR_BUFFER_BIT);
+    //Tools::checkGLErr(getProcName(), "b");
 
     assert(texTarget == GL_TEXTURE_2D); // texTarget = GL_TEXTURE_2D;
 
     // set input texture
     glActiveTexture(GL_TEXTURE0 + texUnit);
     glBindTexture(texTarget, texId); // bind input texture
-
+    Tools::checkGLErr(getProcName(), "c");
+    
     // set common uniforms
     glUniform1i(shParamUInputTex, texUnit);
+    Tools::checkGLErr(getProcName(), "d");
 }
 
 void FilterProcBase::filterRenderSetCoords() {

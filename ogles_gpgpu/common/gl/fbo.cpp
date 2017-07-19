@@ -14,19 +14,21 @@
 using namespace std;
 using namespace ogles_gpgpu;
 
-FBO::FBO() {
+FBO::FBO(bool forOutput) {
     // set defaults
     id = 0;
     texW = texH = 0;
     attachedTexId = 0;
     glTexUnit = 0;
 
-    // get singleton Core instance
-    core = Core::getInstance();
-
-    // create a dedicated MemTransfer object for this FBO
-    memTransfer = MemTransferFactory::createInstance();
-    memTransfer->init();
+    if(forOutput) {
+        // get singleton Core instance
+        core = Core::getInstance();
+        
+        // create a dedicated MemTransfer object for this FBO
+        memTransfer = MemTransferFactory::createInstance();
+        memTransfer->init();
+    }
 
     // generate a FBO id
     generateIds();
@@ -36,7 +38,9 @@ FBO::~FBO() {
     destroyFramebuffer();
 
     // attached texture will be destroyed together with memTransfer instance
-    delete memTransfer;
+    if(memTransfer) {
+        delete memTransfer;
+    }
 }
 
 void FBO::bind() {
@@ -59,6 +63,17 @@ void FBO::destroyAttachedTex() {
 
     // will release attached texture
     memTransfer->releaseOutput();
+}
+
+void FBO::attach(GLuint texId, GLenum attachment, GLenum target)
+{
+    glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, target, texId, 0);
+    GLenum fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (fboStatus != GL_FRAMEBUFFER_COMPLETE) {
+        std::stringstream ss;
+        ss << "Framebuffer incomplete :" << int(fboStatus);
+        throw std::runtime_error(ss.str());
+    }
 }
 
 void FBO::createAttachedTex(int w, int h, bool genMipmap, GLenum attachment, GLenum target) {
