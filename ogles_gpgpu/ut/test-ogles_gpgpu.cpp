@@ -203,7 +203,7 @@ TEST(OGLESGPGPUTest, WriteAndRead) {
         auto almost_equal = [](const cv::Vec4b &a, const cv::Vec4b &b)
         {
             int delta = std::abs(static_cast<int>(a[0]) - static_cast<int>(b[0]));
-            if(delta > 1)
+            if(delta > 2)
             {
                 return false;
             }
