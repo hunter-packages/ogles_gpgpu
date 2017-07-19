@@ -240,7 +240,7 @@ protected:
 
     bool willDownscale; // is true if output size < input size.
 
-    GLenum inputDataFmt; // input pixel data format
+    GLenum inputDataFmt = 0; // input pixel data format
 
     int inFrameW = 0; // input frame width
     int inFrameH = 0; // input frame height
