@@ -138,5 +138,4 @@ else()
   set(aglet_es3 OFF)
 endif()
 
-hunter_config(aglet GIT_SUBMODULE "3rdparty/aglet" CMAKE_ARGS AGLET_OPENGL_ES3=${aglet_es3})
-
+hunter_config(aglet VERSION ${HUNTER_aglet_VERSION} CMAKE_ARGS AGLET_OPENGL_ES3=${aglet_es3})
