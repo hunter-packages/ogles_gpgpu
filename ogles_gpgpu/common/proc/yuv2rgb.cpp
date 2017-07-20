@@ -40,42 +40,56 @@ GLfloat* kColorConversion601 = kColorConversion601Default;
 GLfloat* kColorConversion601FullRange = kColorConversion601FullRangeDefault;
 GLfloat* kColorConversion709 = kColorConversion709Default;
 
-void setColorConversion601(GLfloat conversionMatrix[9]) {
-    kColorConversion601 = conversionMatrix;
-}
-
-void setColorConversion601FullRange(GLfloat conversionMatrix[9]) {
-    kColorConversion601FullRange = conversionMatrix;
-}
-
-void setColorConversion709(GLfloat conversionMatrix[9]) {
-    kColorConversion709 = conversionMatrix;
-}
-
 // clang-format off
-const char *kGPUImageYUVVideoRangeConversionForRGFragmentShaderString = 
+const char *kGPUImageYUVFullRangeConversionForRGFragmentShaderString =
 #if defined(OGLES_GPGPU_OPENGLES)
 OG_TO_STR(precision mediump float;)
 #endif
 OG_TO_STR(
           
- varying vec2 vTexCoord;
+  varying vec2 vTexCoord;
+  
+  uniform sampler2D luminanceTexture;
+  uniform sampler2D chrominanceTexture;
+  uniform mat3 colorConversionMatrix;
+  
+  void main()
+  {
+      vec3 yuv;
+      vec3 rgb;
+      
+      yuv.x = texture2D(luminanceTexture, vTexCoord).r;
+      yuv.yz = texture2D(chrominanceTexture, vTexCoord).rg - vec2(0.5, 0.5);
+      rgb = colorConversionMatrix * yuv;
+      
+      gl_FragColor = vec4(rgb, 1);
+  });
+// clang-format on
 
- uniform sampler2D luminanceTexture;
- uniform sampler2D chrominanceTexture;
- uniform mat3 colorConversionMatrix;
-
- void main()
- {
-     vec3 yuv;
-     vec3 rgb;
-
-     yuv.x = texture2D(luminanceTexture, vTexCoord).r;
-     yuv.yz = texture2D(chrominanceTexture, vTexCoord).rg - vec2(0.5, 0.5);
-     rgb = colorConversionMatrix * yuv;
-
-     gl_FragColor = vec4(rgb, 1);
- });
+// clang-format off
+const char *kGPUImageYUVVideoRangeConversionForRGFragmentShaderString =
+#if defined(OGLES_GPGPU_OPENGLES)
+OG_TO_STR(precision mediump float;)
+#endif
+OG_TO_STR(
+          
+  varying vec2 vTexCoord;
+  
+  uniform sampler2D luminanceTexture;
+  uniform sampler2D chrominanceTexture;
+  uniform mat3 colorConversionMatrix;
+  
+  void main()
+  {
+      vec3 yuv;
+      vec3 rgb;
+      
+      yuv.x = texture2D(luminanceTexture, vTexCoord).r - (16.0/255.0);
+      yuv.yz = texture2D(chrominanceTexture, vTexCoord).rg - vec2(0.5, 0.5);
+      rgb = colorConversionMatrix * yuv;
+      
+      gl_FragColor = vec4(rgb, 1);
+  });
 // clang-format on
 
 // clang-format off
@@ -126,14 +140,23 @@ OG_TO_STR(
      yuv.yz = texture2D(chrominanceTexture, vTexCoord).ra - vec2(0.5, 0.5);
      rgb = colorConversionMatrix * yuv;
 
-     gl_FragColor = vec4(rgb, 1);
+     gl_FragColor = vec4(rgb, 1);          
  });
 // clang-format on
 
 // =================================================================================
 
-Yuv2RgbProc::Yuv2RgbProc() {
-    _preferredConversion = kColorConversion601FullRange;
+
+
+Yuv2RgbProc::Yuv2RgbProc(YUVKind yuvKind, ChannelKind channelKind)
+    : yuvKind(yuvKind)
+    , channelKind(channelKind)
+{
+    switch(yuvKind) {
+        case k601VideoRange: _preferredConversion = kColorConversion601; break;
+        case k601FullRange: _preferredConversion = kColorConversion601FullRange; break;
+        case k709Default: _preferredConversion = kColorConversion709; break;
+    }
 
     texTarget = GL_TEXTURE_2D;
 }
@@ -144,7 +167,6 @@ void Yuv2RgbProc::setTextures(GLuint luminance, GLuint chrominance) {
 }
 
 void Yuv2RgbProc::filterShaderSetup(const char* vShaderSrc, const char* fShaderSrc, GLenum target) {
-    //FilterProcBase::filterShaderSetup(vShaderSrc, fShaderSrc, target);
 
     ProcBase::createShader(vShaderSrc, fShaderSrc, target);
     Tools::checkGLErr(getProcName(), "createShader()");
@@ -174,8 +196,33 @@ int Yuv2RgbProc::init(int inW, int inH, unsigned int order, bool prepareForExter
     baseInit(inW, inH, order, prepareForExternalInput, procParamOutW, procParamOutH, procParamOutScale);
 
     // FilterProcBase init - create shaders, get shader params, set buffers for OpenGL
-    filterInit(FilterProcBase::vshaderDefault, kGPUImageYUVFullRangeConversionForLAFragmentShaderString);
 
+    switch(channelKind) {
+    case kRG:
+        switch(yuvKind) {
+        case k601VideoRange:
+            filterInit(FilterProcBase::vshaderDefault, kGPUImageYUVVideoRangeConversionForRGFragmentShaderString);
+            break;
+        case k601FullRange:
+        case k709Default:
+            filterInit(FilterProcBase::vshaderDefault, kGPUImageYUVFullRangeConversionForRGFragmentShaderString);                
+            break;
+        }
+        break;
+            
+    case kLA:
+        switch(yuvKind) {
+        case k601VideoRange:
+            filterInit(FilterProcBase::vshaderDefault, kGPUImageYUVVideoRangeConversionForLAFragmentShaderString);
+            break;
+        case k601FullRange:
+        case k709Default:
+            filterInit(FilterProcBase::vshaderDefault, kGPUImageYUVFullRangeConversionForLAFragmentShaderString);                
+            break;
+        }
+        break;            
+    }
+    
     return 1;
 }
 
@@ -184,9 +231,6 @@ void Yuv2RgbProc::filterRenderPrepare() {
 
     // set the viewport
     glViewport(0, 0, outFrameW, outFrameH);
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, luminanceTexture);
