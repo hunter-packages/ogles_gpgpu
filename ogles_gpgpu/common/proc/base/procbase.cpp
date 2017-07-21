@@ -111,20 +111,23 @@ void ProcBase::printInfo() {
         willDownscale);
 }
 
-void ProcBase::getResultData(unsigned char* data) const {
+void ProcBase::getResultData(unsigned char* data, int index) const {
     assert(fbo != NULL);
-    fbo->readBuffer(data);
+    fbo->readBuffer(data, index);
 }
 
-void ProcBase::getResultData(FrameDelegate& delegate) const {
+void ProcBase::getResultData(const FrameDelegate& delegate, int index) const {
     assert(fbo != NULL);
-    fbo->readBuffer(delegate);
+    fbo->readBuffer(delegate, index);
 }
 
 MemTransfer* ProcBase::getMemTransferObj() const {
     assert(fbo);
-
     return fbo->getMemTransfer();
+}
+
+void ProcBase::resizePBO(int count) const {
+    fbo->getMemTransfer()->resizePBO(count);
 }
 
 GLuint ProcBase::getOutputTexId() const {
@@ -224,6 +227,7 @@ void ProcBase::createFBO() {
 
     fbo = new FBO();
     fbo->setGLTexUnit(1);
+    fbo->getMemTransfer()->resizePBO(outputPboCount);
 }
 
 void ProcBase::createShader(const char* vShSrc, const char* fShSrc, GLenum target, const Shader::Attributes& attributes) {

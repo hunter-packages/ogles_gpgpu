@@ -4,6 +4,10 @@ using namespace ogles_gpgpu;
 
 // ########## Filter chain
 
+void ProcInterface::setOutputPboCount(int count) {
+    outputPboCount = count;
+}
+
 void ProcInterface::setPreProcessCallback(ProcDelegate& cb) {
     m_preProcessCallback = cb;
 }

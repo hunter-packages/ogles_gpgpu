@@ -115,8 +115,6 @@ void ThreeInputProc::filterRenderPrepare() {
     // set the viewport
     glViewport(0, 0, outFrameW, outFrameH);
 
-    glClear(GL_COLOR_BUFFER_BIT);
-
     // Bind input texture 1:
     glActiveTexture(GL_TEXTURE0 + texUnit);
     glBindTexture(texTarget, texId);

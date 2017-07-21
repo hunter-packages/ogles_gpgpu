@@ -45,7 +45,7 @@ public:
     virtual void setOffset(float x, float y) {
         tx = x;
         ty = y;
-    }    
+    }
 
     /**
      * Return the processors name.
@@ -75,14 +75,14 @@ public:
     /**
      * Not implemented - no output is returned because Disp renders on screen.
      */
-    virtual void getResultData(unsigned char* data) const {
+    virtual void getResultData(unsigned char* data = nullptr, int index = 0) const {
         assert(false);
     }
 
     /**
      * Not implemented - no output is returned because Disp renders on screen.
      */
-    virtual void getResultData(FrameDelegate& frameDelegate) const {
+    virtual void getResultData(const FrameDelegate& frameDelegate = {}, int index = 0) const {
         assert(false);
     }
 
@@ -95,7 +95,6 @@ public:
     }
 
 private:
-
     float tx = 0.f;
     float ty = 0.f;
     float resolutionX = 1.f;

@@ -7,12 +7,12 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
 
 include("cmake/HunterGate.cmake")
 HunterGate(
-  URL "https://github.com/ruslo/hunter/archive/v0.19.29.tar.gz"
-  SHA1 "b0a69cd79597493f5e1e32d4cb77ff764807618a"  
-  LOCAL
-  )
+  URL "https://github.com/ruslo/hunter/archive/v0.19.36.tar.gz"
+  SHA1 "db6f5483795c56968fe628b3cc9791ec6627bdfc"
+  LOCAL  
+)
 
-project(ogles_gpgpu VERSION 0.2.0)
+project(ogles_gpgpu VERSION 0.2.1)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -23,6 +23,11 @@ option(OGLES_GPGPU_INSTALL "Perform installation" ON)
 option(OGLES_GPGPU_VERBOSE "Perform per filter logging" OFF)
 option(OGLES_GPGPU_BUILD_TESTS "Build shader unit tests" OFF)
 option(OGLES_GPGPU_USE_OSMESA "Use MESA CPU OpenGL (via glfw)" OFF)
+
+# !!! Make sure option OGLES_GPGPU_OPENG_ES3 occurs prior to the first
+# hunter_add_package() call.  This will allow us to modify settings
+# in dependencies appropriately (see cmake/Hunter/config.cmake)
+option(OGLES_GPGPU_OPENGL_ES3 "Use OpenGL ES 3.0" OFF)
 
 # See: cmake/Hunter/config.cmake
 hunter_add_package(Sugar)

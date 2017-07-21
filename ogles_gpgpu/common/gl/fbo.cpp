@@ -8,25 +8,26 @@
 //
 
 #include "fbo.h"
-
 #include "ogles_gpgpu/platform/opengl/gl_includes.h"
 
 using namespace std;
 using namespace ogles_gpgpu;
 
-FBO::FBO() {
+FBO::FBO(bool doAlloc) {
     // set defaults
     id = 0;
     texW = texH = 0;
     attachedTexId = 0;
     glTexUnit = 0;
 
-    // get singleton Core instance
-    core = Core::getInstance();
+    if (doAlloc) {
+        // get singleton Core instance
+        core = Core::getInstance();
 
-    // create a dedicated MemTransfer object for this FBO
-    memTransfer = MemTransferFactory::createInstance();
-    memTransfer->init();
+        // create a dedicated MemTransfer object for this FBO
+        memTransfer = MemTransferFactory::createInstance();
+        memTransfer->init();
+    }
 
     // generate a FBO id
     generateIds();
@@ -36,7 +37,9 @@ FBO::~FBO() {
     destroyFramebuffer();
 
     // attached texture will be destroyed together with memTransfer instance
-    delete memTransfer;
+    if (memTransfer) {
+        delete memTransfer;
+    }
 }
 
 void FBO::bind() {
@@ -59,6 +62,16 @@ void FBO::destroyAttachedTex() {
 
     // will release attached texture
     memTransfer->releaseOutput();
+}
+
+void FBO::attach(GLuint texId, GLenum attachment, GLenum target) {
+    glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, target, texId, 0);
+    GLenum fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (fboStatus != GL_FRAMEBUFFER_COMPLETE) {
+        std::stringstream ss;
+        ss << "Framebuffer incomplete :" << int(fboStatus);
+        throw std::runtime_error(ss.str());
+    }
 }
 
 void FBO::createAttachedTex(int w, int h, bool genMipmap, GLenum attachment, GLenum target) {
@@ -116,27 +129,27 @@ void FBO::createAttachedTex(int w, int h, bool genMipmap, GLenum attachment, GLe
     unbind();
 }
 
-void FBO::readBuffer(unsigned char* buf) {
+void FBO::readBuffer(unsigned char* buf, int index) {
     assert(memTransfer && attachedTexId > 0 && texW > 0 && texH > 0);
 
     // bind the FBO
     bind();
 
     // get the contents of its attached texture
-    memTransfer->fromGPU(buf);
+    memTransfer->fromGPU(buf, index);
 
     // unbind again
     unbind();
 }
 
-void FBO::readBuffer(FrameDelegate& delegate) {
+void FBO::readBuffer(const FrameDelegate& delegate, int index) {
     assert(memTransfer && attachedTexId > 0 && texW > 0 && texH > 0);
 
     // bind the FBO
     bind();
 
     // get the contents of its attached texture
-    memTransfer->fromGPU(delegate);
+    memTransfer->fromGPU(delegate, index);
 
     // unbind again
     unbind();

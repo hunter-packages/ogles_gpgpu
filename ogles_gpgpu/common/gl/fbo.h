@@ -32,7 +32,7 @@ public:
     /**
      * Constructor.
      */
-    FBO();
+    FBO(bool doAlloc = true);
 
     /**
      * Deconstructor.
@@ -85,6 +85,11 @@ public:
     void unbind();
 
     /**
+     * Attach a pre-existing texture to the framebuffer.
+     */
+    virtual void attach(GLuint texId, GLenum attachment = GL_COLOR_ATTACHMENT0, GLenum target = GL_TEXTURE_2D);
+
+    /**
      * Will create a framebuffer output texture with texture id <attachedTexId>
      * and will bind it to this FBO.
      */
@@ -94,12 +99,12 @@ public:
      * Copy the framebuffer data which was written to the framebuffer texture back to
      * main memory at <buf>.
      */
-    virtual void readBuffer(unsigned char* buf);
+    virtual void readBuffer(unsigned char* buf, int index = 0);
 
     /**
      * Call the delegate on framebuffer data which was written to the framebuffer texture.
      */
-    virtual void readBuffer(FrameDelegate& delegate);
+    virtual void readBuffer(const FrameDelegate& delegate, int index = 0);
 
     /**
      * Free the framebuffer.
@@ -140,7 +145,7 @@ protected:
 
     Core* core; // Core singleton
 
-    MemTransfer* memTransfer; // MemTransfer object associated with this FBO
+    MemTransfer* memTransfer = nullptr; // MemTransfer object associated with this FBO
 
     GLuint id; // OpenGL FBO id
     GLuint glTexUnit; // GL texture unit (to be used in glActiveTexture()) for output texture

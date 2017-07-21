@@ -37,8 +37,8 @@ public:
     virtual int getInFrameW() const;
     virtual int getInFrameH() const;
     virtual bool getWillDownscale() const;
-    virtual void getResultData(unsigned char* data) const;
-    virtual void getResultData(FrameDelegate& delegate) const;
+    virtual void getResultData(unsigned char* data = nullptr, int index = 0) const;
+    virtual void getResultData(const FrameDelegate& delegate = {}, int index = 0) const;
     virtual MemTransfer* getMemTransferObj() const;
     virtual MemTransfer* getInputMemTransferObj() const;
     virtual GLuint getInputTexId() const;

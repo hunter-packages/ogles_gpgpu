@@ -23,3 +23,11 @@ sugar_files(
     shader.cpp
     shader.h
 )
+
+if (OGLES_GPGPU_OPENGL_ES3)
+  sugar_files(
+    OGLES_GPGPU_SRCS
+    pbo.cpp
+    pbo.h
+    )
+endif()

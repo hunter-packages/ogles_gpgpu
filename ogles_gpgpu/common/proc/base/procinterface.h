@@ -55,6 +55,11 @@ public:
     virtual void cleanup() = 0;
 
     /**
+     * Set the output PBO count (OpenGL ES 3.0)
+     */
+    virtual void setOutputPboCount(int count);
+
+    /**
      * Set pixel data format for input data to <fmt>. Must be set before init() / reinit().
      */
     virtual void setExternalInputDataFormat(GLenum fmt) = 0;
@@ -180,17 +185,23 @@ public:
     /**
      * Return the result data from the FBO.
      */
-    virtual void getResultData(unsigned char* data) const = 0;
+    virtual void getResultData(unsigned char* data = nullptr, int index = 0) const = 0;
 
     /**
      * Return the result data from the FBO (zero copy).
      */
-    virtual void getResultData(FrameDelegate&) const = 0;
+    virtual void getResultData(const FrameDelegate& delegate = {}, int index = 0) const = 0;
 
     /**
      * Return pointer to MemTransfer object of this processor.
      */
     virtual MemTransfer* getMemTransferObj() const = 0;
+
+    /**
+     * Create N framebuffers for asynchronous downloads.
+     * (Only supported for >= OpenGL ES 3.0)
+     */
+    virtual void resizePBO(int count) const {}
 
     /**
      * Return pointer to designated input MemTransfer object of this processor.
@@ -291,6 +302,8 @@ protected:
     std::string title;
 
     bool active = true;
+
+    int outputPboCount = 1;
 
     std::vector<std::pair<ProcInterface*, int>> subscribers;
 

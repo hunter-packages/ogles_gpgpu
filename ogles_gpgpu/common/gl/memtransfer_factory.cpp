@@ -10,21 +10,15 @@
 #include "memtransfer_factory.h"
 #include "../core.h"
 
-//#ifdef __APPLE__
-//#include "../../platform/ios/memtransfer_ios.h"
-//#elif __ANDROID__
-//#include "../../platform/android/memtransfer_android.h"
-//#endif
-
-#ifdef OGLES_GPGPU_IOS
-#include "../../platform/ios/memtransfer_ios.h"
-#elif OGLES_GPGPU_OSX
-#include "../../platform/osx/memtransfer_osx.h"
-#elif OGLES_GPGPU_ANDROID
-#include "../../platform/android/memtransfer_android.h"
+// clang-off
+#if defined(OGLES_GPGPU_IOS) && !defined(OGLES_GPGPU_OPENGL_ES3)
+#  include "../../platform/ios/memtransfer_ios.h"
+#elif defined(OGLES_GPGPU_ANDROID) && !defined(OGLES_GPGPU_OPENGL_ES3)
+#  include "../../platform/android/memtransfer_android.h"
 #else
-#include "../../platform/opengl/memtransfer_generic.h"
+#  include "../../platform/opengl/memtransfer_generic.h"
 #endif
+// clang-on
 
 using namespace ogles_gpgpu;
 
@@ -34,11 +28,9 @@ MemTransfer* MemTransferFactory::createInstance() {
     MemTransfer* instance = NULL;
 
     if (usePlatformOptimizations) { // create specialized instance
-#ifdef OGLES_GPGPU_IOS
+#if defined(OGLES_GPGPU_IOS) && !defined(OGLES_GPGPU_OPENGL_ES3)
         instance = (MemTransfer*)new MemTransferIOS();
-#elif OGLES_GPGPU_OSX
-        instance = (MemTransfer*)new MemTransferOSX();
-#elif OGLES_GPGPU_ANDROID
+#elif defined(OGLES_GPGPU_ANDROID) && !defined(OGLES_GPGPU_OPENGL_ES3)
         instance = (MemTransfer*)new MemTransferAndroid();
 #else
         instance = (MemTransfer*)new MemTransfer();
@@ -53,11 +45,9 @@ MemTransfer* MemTransferFactory::createInstance() {
 }
 
 bool MemTransferFactory::tryEnablePlatformOptimizations() {
-#ifdef OGLES_GPGPU_IOS
+#if defined(OGLES_GPGPU_IOS) && !defined(OGLES_GPGPU_OPENGL_ES3)
     usePlatformOptimizations = MemTransferIOS::initPlatformOptimizations();
-#elif OGLES_GPGPU_OSX
-    usePlatformOptimizations = MemTransferOSX::initPlatformOptimizations();
-#elif OGLES_GPGPU_ANDROID
+#elif defined(OGLES_GPGPU_ANDROID) && !defined(OGLES_GPGPU_OPENGL_ES3)
     usePlatformOptimizations = MemTransferAndroid::initPlatformOptimizations();
 #else
     usePlatformOptimizations = false;

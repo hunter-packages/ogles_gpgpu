@@ -154,17 +154,23 @@ public:
     /**
      * Return the result data from the FBO.
      */
-    virtual void getResultData(unsigned char* data) const;
+    virtual void getResultData(unsigned char* data = nullptr, int index = 0) const;
 
     /**
      * Return the result data from the FBO.
      */
-    virtual void getResultData(FrameDelegate& delegate) const;
+    virtual void getResultData(const FrameDelegate& delegate = {}, int index = 0) const;
 
     /**
      * Return pointer to MemTransfer object of this processor.
      */
     virtual MemTransfer* getMemTransferObj() const;
+
+    /**
+     * Create N framebuffers for asynchronous downloads.
+     * (Only supported for >= OpenGL ES 3.0)
+     */
+    virtual void resizePBO(int count) const;
 
     /**
      * Return input texture id.
@@ -240,7 +246,7 @@ protected:
 
     bool willDownscale; // is true if output size < input size.
 
-    GLenum inputDataFmt; // input pixel data format
+    GLenum inputDataFmt = 0; // input pixel data format
 
     int inFrameW = 0; // input frame width
     int inFrameH = 0; // input frame height

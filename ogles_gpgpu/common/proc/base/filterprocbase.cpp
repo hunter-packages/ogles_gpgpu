@@ -204,8 +204,6 @@ void FilterProcBase::filterRenderPrepare() {
     // set the viewport
     glViewport(0, 0, outFrameW, outFrameH);
 
-    glClear(GL_COLOR_BUFFER_BIT);
-
     assert(texTarget == GL_TEXTURE_2D); // texTarget = GL_TEXTURE_2D;
 
     // set input texture

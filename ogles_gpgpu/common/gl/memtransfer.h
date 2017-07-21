@@ -15,9 +15,18 @@
 #define OGLES_GPGPU_COMMON_GL_MEMTRANSFER
 
 #include "../common_includes.h"
+
 #include <functional>
+#include <memory>
+
+#define OGLES_GPGPU_USE_CLASS_READ 1
+#define OGLES_GPGPU_USE_CLASS_WRITE 1
 
 namespace ogles_gpgpu {
+
+class IPBO;
+class OPBO;
+class FBO;
 
 /**
  * MemTransfer handles memory transfer and mapping between CPU and GPU memory space.
@@ -105,13 +114,45 @@ public:
 
     /**
      * Map data from GPU to <buf>
+     *
+     * If OGLES_GPGPU_ES3 is defined, then we have three
+     * valid modes of operation:
+     *
+     * 1) if (<buf> == nullptr), then the transfer for PBO <index>
+     * will be initiated asynchronously
+     *
+     * 2) if (<buf> != nullptr), and this call was preceded
+     * by a call for the same index where (<buf> == nullptr)
+     * then the call will block on a final memcpy of the 
+     * PBO buffer.
+     *
+     * 3) if (<buf> != nullptr), and this call was not preceded
+     * by a call for the same index where (<buf> == nullptr)
+     * then the call will perform a syncrhonous memcpy of the
+     * PBO buffer
      */
-    virtual void fromGPU(unsigned char* buf);
+    virtual void fromGPU(unsigned char* buf, int index = 0);
 
     /**
-     * Callback for data in GPU.
+     * Map data from GPU to <buf>
+     *
+     * If OGLES_GPGPU_ES3 is defined, then we have three
+     * valid modes of operation:
+     *
+     * 1) if (<delegate> == nullptr), then the transfer for PBO <index>
+     * will be initiated asynchronously
+     *
+     * 2) if (<delegate> != nullptr), and this call was preceded
+     * by a call for the same index where (<delegate> == nullptr)
+     * then the call will block on a final memcpy of the
+     * PBO buffer.
+     *
+     * 3) if (<delegate> != nullptr), and this call was not preceded
+     * by a call for the same index where (<delegate> == nullptr)
+     * then the call will perform a syncrhonous memcpy of the
+     * PBO buffer
      */
-    virtual void fromGPU(FrameDelegate& delegate);
+    virtual void fromGPU(const FrameDelegate& delegate, int index = 0);
 
     /**
      * Get output pixel format (i.e., GL_BGRA or GL_RGBA)
@@ -140,6 +181,12 @@ public:
     virtual void setUseRawPixels(bool flag) {
         useRawPixels = flag;
     }
+
+    /**
+     * Create N framebuffers for asynchronous downloads.
+     * (Only supported for >= OpenGL ES 3.0)
+     */
+    virtual void resizePBO(int count);
 
     /**
      * Try to initialize platform optimizations. Returns true on success, else false.
@@ -174,6 +221,22 @@ protected:
     GLenum outputPixelFormat;
 
     bool useRawPixels = false;
+
+#if defined(OGLES_GPGPU_OPENGL_ES3)
+    FBO* fbo = nullptr;
+
+#if OGLES_GPGPU_USE_CLASS_READ
+    std::vector<std::unique_ptr<IPBO>> pboReaders;
+#else // OGLES_GPGPU_USE_CLASS_READ
+    GLuint pboRead;
+#endif // OGLES_GPGPU_USE_CLASS_READ
+
+#if OGLES_GPGPU_USE_CLASS_WRITE
+    OPBO* pboWrite = nullptr;
+#else // OGLES_GPGPU_USE_CLASS_WRITE
+    GLuint pboWrite;
+#endif // OGLES_GPGPU_USE_CLASS_WRITE
+#endif
 };
 }
 

@@ -41,11 +41,11 @@ int MultiProcInterface::getInFrameH() const {
 bool MultiProcInterface::getWillDownscale() const {
     return getInputFilter()->getWillDownscale();
 }
-void MultiProcInterface::getResultData(unsigned char* data) const {
-    getOutputFilter()->getResultData(data);
+void MultiProcInterface::getResultData(unsigned char* data, int index) const {
+    getOutputFilter()->getResultData(data, index);
 }
-void MultiProcInterface::getResultData(FrameDelegate& delegate) const {
-    getOutputFilter()->getResultData(delegate);
+void MultiProcInterface::getResultData(const FrameDelegate& delegate, int index) const {
+    getOutputFilter()->getResultData(delegate, index);
 }
 MemTransfer* MultiProcInterface::getMemTransferObj() const {
     return getOutputFilter()->getMemTransferObj();
