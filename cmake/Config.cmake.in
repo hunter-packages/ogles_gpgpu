@@ -3,10 +3,18 @@
 include(CMakeFindDependencyMacro)
 
 if(@MSVC@)
-  find_dependency(glew CONFIG)
+  find_dependency(glew)
   find_dependency(OpenGL)
 elseif(@ANDROID@)
   # Use system dependencies
+  find_dependency(android)
+  find_dependnecy(android_log)
+  find_dependency(egl)
+  if(@OGLES_GPGPU_OPENGL_ES3@)
+    find_dependency(gles3)
+  else()
+    find_dependency(gles2)
+  endif()
 elseif(@APPLE@)
   # IOS and OSX are using frameworks
 else()
