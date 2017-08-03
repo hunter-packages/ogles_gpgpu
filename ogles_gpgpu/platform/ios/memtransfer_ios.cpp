@@ -428,7 +428,7 @@ void MemTransferIOS::toGPU(const unsigned char* buf) {
     glBindTexture(GL_TEXTURE_2D, inputTexId);
 }
 
-void MemTransferIOS::fromGPU(unsigned char* buf) {
+void MemTransferIOS::fromGPU(unsigned char* buf, int /*index*/) {
     assert(preparedOutput && outputPixelBuffer && outputTexId > 0 && buf);
 
     // bind the texture
@@ -439,7 +439,7 @@ void MemTransferIOS::fromGPU(unsigned char* buf) {
     unlockBuffer(BUF_TYPE_OUTPUT);
 }
 
-void MemTransferIOS::fromGPU(FrameDelegate& delegate) {
+void MemTransferIOS::fromGPU(const FrameDelegate& delegate, int /*index*/) {
     // bind the texture
     glBindTexture(GL_TEXTURE_2D, outputTexId);
 

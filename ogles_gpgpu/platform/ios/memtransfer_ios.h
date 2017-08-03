@@ -89,7 +89,7 @@ public:
     /**
      * Map data from GPU to <buf>
      */
-    virtual void fromGPU(unsigned char* buf);
+    virtual void fromGPU(unsigned char* buf, int /*index*/);
 
     /**
      * Inidcates whether or not this MemTransfer implementation
@@ -102,7 +102,7 @@ public:
     /**
      * Apply callback to FBO texture.
      */
-    virtual void fromGPU(FrameDelegate& delegate);
+    virtual void fromGPU(const FrameDelegate& delegate, int /*index*/);
 
     /**
      * Get bytes per row in underlying FBO.
