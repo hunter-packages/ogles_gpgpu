@@ -52,6 +52,8 @@ sugar_files(
     iir.h#
     ixyt.cpp#
     ixyt.h#
+    letterbox.cpp
+    letterbox.h
     lnorm.h#
     lbp.cpp#
     lbp.h#
@@ -66,8 +68,12 @@ sugar_files(
     remap.h#
     rgb2hsv.cpp#
     rgb2hsv.h#
+    rgb2luv.cpp
+    rgb2luv.h
     shitomasi.cpp#
     shitomasi.h#
+    swizzle.cpp
+    swizzle.h
     tensor.cpp#
     tensor.h#
     three.cpp#

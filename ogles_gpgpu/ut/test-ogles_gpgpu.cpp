@@ -14,19 +14,28 @@
 // clang-format off
 #ifdef ANDROID
 #  define TEXTURE_FORMAT GL_RGBA
+static cv::Vec4b torgba(const cv::Vec4b &p) { return cv::Vec4b(p[0], p[1], p[2], p[3]); }
+static cv::Vec3b torgb(const cv::Vec3b &p) { return cv::Vec3b(p[0], p[1], p[2]); }
+}
 #else
 #  define TEXTURE_FORMAT GL_BGRA
+static cv::Vec4b torgba(const cv::Vec4b &p) { return cv::Vec4b(p[2], p[1], p[0], p[3]); }
+static cv::Vec3b torgb(const cv::Vec3b &p) { return cv::Vec3b(p[2], p[1], p[0]); }
 #endif
 // clang-format off
 
-#define OGLES_GPGPU_DEBUG_YUV 1
+#define OGLES_GPGPU_DEBUG_YUV 0
 
 #include "../common/gl/memtransfer_optimized.h"
 
 // clang-format off
-#include "../common/proc/yuv2rgb.h"      // [0]
+
+#include "../common/proc/letterbox.h"    // [x]
+#include "../common/proc/rgb2luv.h"      // [x]
+#include "../common/proc/swizzle.h"      // [x]
+#include "../common/proc/yuv2rgb.h"      // [x]
 #include "../common/proc/lnorm.h"        // [0]
-#include "../common/proc/video.h"        // [0]
+#include "../common/proc/video.h"        // [x]
 #include "../common/proc/adapt_thresh.h" // [x]
 #include "../common/proc/gain.h"         // [x]
 #include "../common/proc/blend.h"        // [x]
@@ -55,13 +64,15 @@
 #include "../common/proc/flow.h"         // [0]
 #include "../common/proc/rgb2hsv.h"      // [0]
 #include "../common/proc/hsv2rgb.h"      // [0]
-#include "../common/proc/remap.h"        // [ ]
+#include "../common/proc/remap.h"        // [-]
 // clang-format on
 
 // virtual (tested indirectly)
 //#include "../common/proc/filter3x3.h"
 //#include "../common/proc/two.h"
 //#include "../common/proc/three.h"
+
+static cv::Vec3f cvtColorRgb2Luv(const cv::Vec3f& rgb);
 
 int gauze_main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
@@ -181,6 +192,111 @@ TEST(OGLESGPGPUTest, PingPong) {
 }
 #endif // defined(OGLES_GPGPU_OPENGL_ES3)
 
+
+inline cv::Vec4b convert(const cv::Scalar &value)
+{
+    return cv::Vec4b(value[0], value[1], value[2], value[3]);
+}
+
+TEST(OGLESGPGPUTest, LetterboxProc) {
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
+    ASSERT_TRUE(context && (*context));
+    if (context && *context) {
+        cv::Mat test = getTestImage(gWidth, gHeight, 10, true, TEXTURE_FORMAT);
+        glActiveTexture(GL_TEXTURE0);
+        ogles_gpgpu::VideoSource video;
+        ogles_gpgpu::LetterboxProc letterbox;
+
+        letterbox.setHeight(0.25f);
+        letterbox.setColor(1.0f, 1.0f, 1.0f);
+
+        video.set(&letterbox);
+        video({ { test.cols, test.rows }, test.ptr<void>(), true, 0, TEXTURE_FORMAT });
+
+        cv::Mat result;
+        getImage(letterbox, result);
+        ASSERT_FALSE(result.empty());
+
+        // Check for expected color in top and bottom bands:
+
+        int band = test.rows/8;
+
+        cv::Rect roi(0,0, result.cols, band);
+        const auto colorUpper = cv::mean(result(roi));
+        const auto colorLower = cv::mean(result(roi + cv::Point(0,test.rows-1-band)));
+
+        // Check for expected color in top and bottom bands:
+        ASSERT_EQ(convert(colorUpper), convert(cv::Scalar::all(255)));
+        ASSERT_EQ(convert(colorLower), convert(cv::Scalar::all(255)));
+    }
+}
+
+TEST(OGLESGPGPUTest, Rgb2LuvProc) {
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
+    ASSERT_TRUE(context && (*context));
+    if (context && *context) {
+        cv::Mat test = getTestImage(gWidth, gHeight, 10, true, TEXTURE_FORMAT);
+        glActiveTexture(GL_TEXTURE0);
+        ogles_gpgpu::VideoSource video;
+        ogles_gpgpu::Rgb2LuvProc rgb2luv;
+
+        video.set(&rgb2luv);
+        video({ { test.cols, test.rows }, test.ptr<void>(), true, 0, TEXTURE_FORMAT });
+
+        cv::Mat result;
+        getImage(rgb2luv, result);
+        ASSERT_FALSE(result.empty());
+
+        for(int i = 0; i < std::min(result.rows, result.cols); i++)
+        {
+            cv::Vec4b in = test.at<cv::Vec4b>(i, i);
+            cv::Vec4b out = torgba(result.at<cv::Vec4b>(i, i));
+
+            cv::Vec3b rgb = torgb(cv::Vec3b(in[0], in[1], in[2]));
+            cv::Vec3b luv = cvtColorRgb2Luv(cv::Vec3f(rgb) * (1.0/255.0)) * 255.0;
+            
+            ASSERT_EQ(cv::Vec3b(out[0], out[1], out[2]), luv);
+        }
+    }
+}
+
+TEST(OGLESGPGPUTest, SwizzleProc) {
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
+    ASSERT_TRUE(context && (*context));
+    if (context && *context) {
+        cv::Mat test = getTestImage(gWidth, gHeight, 10, true, TEXTURE_FORMAT);
+        glActiveTexture(GL_TEXTURE0);
+        ogles_gpgpu::VideoSource video;
+        ogles_gpgpu::GainProc noop;
+        ogles_gpgpu::SwizzleProc swizzle(ogles_gpgpu::SwizzleProc::kSwizzleBGRA);
+
+        video.set(&noop);
+        noop.add(&swizzle);
+        video({ { test.cols, test.rows }, test.ptr<void>(), true, 0, TEXTURE_FORMAT });
+
+        cv::Mat result1, result2;
+
+        getImage(noop, result1);
+        ASSERT_FALSE(result1.empty());
+                
+        getImage(swizzle, result2);
+        ASSERT_FALSE(result2.empty());
+        
+        for(int i = 0; i < std::min(result1.rows, result1.cols); i++)
+        {
+            cv::Vec4b in = test.at<cv::Vec4b>(i, i);
+            cv::Vec4b out1 = result1.at<cv::Vec4b>(i, i);
+            cv::Vec4b out2 = result2.at<cv::Vec4b>(i, i);
+
+            cv::swap(out2[0], out2[2]);
+            ASSERT_EQ(out1, out2);
+        }
+    }
+}
+
 TEST(OGLESGPGPUTest, GrayScaleProc) {
     auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
     (*context)();
@@ -194,10 +310,7 @@ TEST(OGLESGPGPUTest, GrayScaleProc) {
         gray.setGrayscaleConvType(ogles_gpgpu::GRAYSCALE_INPUT_CONVERSION_RGB);
 
         video.set(&gray);
-
-        for (int i = 0; i < 1000; i++) {
-            video({ { test.cols, test.rows }, test.ptr<void>(), true, 0, TEXTURE_FORMAT });
-        }
+        video({ { test.cols, test.rows }, test.ptr<void>(), true, 0, TEXTURE_FORMAT });
 
         cv::Mat result;
         getImage(gray, result);
@@ -206,13 +319,10 @@ TEST(OGLESGPGPUTest, GrayScaleProc) {
         cv::Mat truth;
         cv::cvtColor(test, truth, (TEXTURE_FORMAT == GL_RGBA) ? cv::COLOR_RGBA2GRAY : cv::COLOR_BGRA2GRAY);
 
-        std::cout << cv::mean(truth) << " vs " << cv::mean(result) << std::endl;
-
         // clang-off
         auto almost_equal = [](const cv::Vec4b& a, const cv::Vec4b& b) {
             int delta = std::abs(static_cast<int>(a[0]) - static_cast<int>(b[0]));
             if (delta > 2) {
-                //std::cout << "delta: " << delta << std::endl;
                 return false;
             }
             return true;
@@ -1083,3 +1193,30 @@ TEST(OGLESGPGPUTest, MedianProc) {
     }
 }
 #endif
+
+static cv::Vec3f cvtColorRgb2Luv(const cv::Vec3f& rgb)
+{
+    // column major format (glsl)
+    cv::Matx33f RGBtoXYZ(0.430574, 0.222015, 0.020183, 0.341550, 0.706655, 0.129553, 0.178325, 0.071330, 0.939180);
+    RGBtoXYZ = RGBtoXYZ.t(); // to row major
+
+    const float y0 = 0.00885645167f; //pow(6.0/29.0, 3.0);
+    const float a = 903.296296296f;  //pow(29.0/3.0, 3.0);
+    const float un = 0.197833f;
+    const float vn = 0.468331f;
+    const float maxi = 0.0037037037f; // 1.0/270.0;
+    const float minu = maxi * -88.0f;
+    const float minv = maxi * -134.0f;
+    const cv::Vec3f k(1.0f, 15.0f, 3.0f);
+
+    cv::Vec3f xyz = (RGBtoXYZ * rgb); // make like glsl col major
+    const float c = (xyz.dot(k) + 1e-35);
+    const float z = 1.0f / c;
+
+    cv::Vec3f luv;
+    luv[0] = ((xyz[1] > y0) ? (116.0f * std::pow(xyz[1], 0.3333333333f) - 16.0f) : (xyz[1] * a)) * maxi;
+    luv[1] = luv[0] * ((52.0f * xyz[0] * z) - (13.0f * un)) - minu;
+    luv[2] = luv[0] * ((117.0f * xyz[1] * z) - (13.0f * vn)) - minv;
+
+    return luv;
+}
