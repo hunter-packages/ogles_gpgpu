@@ -16,7 +16,6 @@
 #  define TEXTURE_FORMAT GL_RGBA
 static cv::Vec4b torgba(const cv::Vec4b &p) { return cv::Vec4b(p[0], p[1], p[2], p[3]); }
 static cv::Vec3b torgb(const cv::Vec3b &p) { return cv::Vec3b(p[0], p[1], p[2]); }
-}
 #else
 #  define TEXTURE_FORMAT GL_BGRA
 static cv::Vec4b torgba(const cv::Vec4b &p) { return cv::Vec4b(p[2], p[1], p[0], p[3]); }
