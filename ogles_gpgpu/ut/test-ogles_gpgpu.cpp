@@ -71,6 +71,88 @@ static cv::Vec3b torgb(const cv::Vec3b &p) { return cv::Vec3b(p[2], p[1], p[0]);
 //#include "../common/proc/two.h"
 //#include "../common/proc/three.h"
 
+#include <type_traits>
+
+// https://stackoverflow.com/a/8024562
+template <typename T, bool> struct absdiff_aux;
+
+template <typename T> struct absdiff_aux<T, true>
+{
+    static T absdiff(T a, T b)
+    {
+        return (a < b) ? (b - a) : (a - b);
+    }
+};
+
+template <typename T> struct absdiff_aux<T, false>
+{
+    typedef typename std::make_unsigned<T>::type UT;
+    static UT absdiff(T a, T b)
+    {
+        if ((a >= 0 && b >= 0) || (a < 0 && b < 0))
+        {
+            return (a < b) ? (b - a) : (a - b);
+        }
+
+        if (b > 0)
+        {
+            UT d = -a;
+            return UT(b) + d;
+        }
+        else
+        {
+            UT d = -b;
+            return UT(a) + d;
+        }
+    }
+};
+
+template <typename T> typename std::make_unsigned<T>::type absdiff(T a, T b)
+{
+  return absdiff_aux<T, std::is_signed<T>::value>::absdiff(a, b);
+}
+
+namespace cv
+{
+    template <typename T, int N>
+    cv::Vec<T, N> absdiff(const cv::Vec<T, N> &a, const cv::Vec<T, N> &b)
+    {
+        cv::Vec<T, N> d;
+        for (int i = 0; i < N; i++)
+        {
+            d[i] = ::absdiff(a[i], b[i]);
+        }
+        return d;
+    }
+}
+
+template <typename T, int N>
+T max_element(const cv::Vec<T, N> &a)
+{
+    T b = a[0];
+    for (int i = 1; i < N; i++)
+    {
+        if (a[i] > b)
+        {
+            b = a[i];
+        }
+    }
+    return b;
+}
+
+template <typename T, int N>
+bool almost_equal(const cv::Mat_<cv::Vec<T,N>> &a, const cv::Mat_<cv::Vec<T,N>> &b, T error)
+{
+    using VecType = cv::Vec<T,N>;
+
+    auto almost_equal = [error](const VecType& a, const VecType& b)
+    {
+        return max_element(cv::absdiff(a, b)) <= error;
+    };
+
+    return std::equal(a.begin(), a.end(), b.begin(), almost_equal);
+}
+    
 static cv::Vec3f cvtColorRgb2Luv(const cv::Vec3f& rgb);
 
 int gauze_main(int argc, char** argv) {
@@ -255,8 +337,8 @@ TEST(OGLESGPGPUTest, Rgb2LuvProc) {
 
             cv::Vec3b rgb = torgb(cv::Vec3b(in[0], in[1], in[2]));
             cv::Vec3b luv = cvtColorRgb2Luv(cv::Vec3f(rgb) * (1.0/255.0)) * 255.0;
-            
-            ASSERT_EQ(cv::Vec3b(out[0], out[1], out[2]), luv);
+
+            ASSERT_LE(max_element(cv::absdiff(cv::Vec3b(out[0],out[1],out[2]), luv)), 1);
         }
     }
 }
@@ -283,16 +365,9 @@ TEST(OGLESGPGPUTest, SwizzleProc) {
                 
         getImage(swizzle, result2);
         ASSERT_FALSE(result2.empty());
-        
-        for(int i = 0; i < std::min(result1.rows, result1.cols); i++)
-        {
-            cv::Vec4b in = test.at<cv::Vec4b>(i, i);
-            cv::Vec4b out1 = result1.at<cv::Vec4b>(i, i);
-            cv::Vec4b out2 = result2.at<cv::Vec4b>(i, i);
 
-            cv::swap(out2[0], out2[2]);
-            ASSERT_EQ(out1, out2);
-        }
+        cv::cvtColor(result2, result2, cv::COLOR_RGBA2BGRA);
+        ASSERT_TRUE(almost_equal(cv::Mat4b(result1), cv::Mat4b(result2), static_cast<unsigned char>(1)));
     }
 }
 
@@ -317,17 +392,8 @@ TEST(OGLESGPGPUTest, GrayScaleProc) {
 
         cv::Mat truth;
         cv::cvtColor(test, truth, (TEXTURE_FORMAT == GL_RGBA) ? cv::COLOR_RGBA2GRAY : cv::COLOR_BGRA2GRAY);
-
-        // clang-off
-        auto almost_equal = [](const cv::Vec4b& a, const cv::Vec4b& b) {
-            int delta = std::abs(static_cast<int>(a[0]) - static_cast<int>(b[0]));
-            if (delta > 2) {
-                return false;
-            }
-            return true;
-        };
-        ASSERT_TRUE(std::equal(truth.begin<cv::Vec4b>(), truth.end<cv::Vec4b>(), result.begin<cv::Vec4b>(), almost_equal));
-        // clang-on
+        cv::cvtColor(truth, truth, cv::COLOR_GRAY2BGRA);
+        ASSERT_TRUE(almost_equal(cv::Mat4b(result), cv::Mat4b(truth), static_cast<std::uint8_t>(2)));
     }
 }
 
@@ -367,16 +433,7 @@ TEST(OGLESGPGPUTest, WriteAndRead) {
 
         cv::Mat result;
         getImage(gain, result);
-
-        auto almost_equal = [](const cv::Vec4b& a, const cv::Vec4b& b) {
-            int delta = std::abs(static_cast<int>(a[0]) - static_cast<int>(b[0]));
-            if (delta > 2) {
-                return false;
-            }
-            return true;
-        };
-
-        ASSERT_TRUE(std::equal(test.begin<cv::Vec4b>(), test.end<cv::Vec4b>(), result.begin<cv::Vec4b>(), almost_equal));
+        ASSERT_TRUE(almost_equal(cv::Mat4b(test), cv::Mat4b(result), static_cast<std::uint8_t>(2)));
     }
 }
 
@@ -413,7 +470,6 @@ TEST(OGLESGPGPUTest, Yuv2RgbProc) {
         // Luminance texture:
         GLTexture luminanceTexture(gWidth, gHeight, GL_LUMINANCE, y.data(), GL_LUMINANCE);
         ASSERT_EQ(glGetError(), GL_NO_ERROR);
-        std::cout << "ES2 k601VideoRange kLA" << std::endl;
 
         // Chrominance texture (interleaved):
         GLTexture chrominanceTexture(gWidth / 2, gHeight / 2, GL_LUMINANCE_ALPHA, uv.data(), GL_LUMINANCE_ALPHA);
