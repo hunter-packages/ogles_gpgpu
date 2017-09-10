@@ -46,8 +46,8 @@ matrix:
   include:
     # Linux {
 
-    - os: linux
-      env: CONFIG=Release TOOLCHAIN=gcc INSTALL=--strip MESA=ON TEST=--test
+#    - os: linux
+#      env: CONFIG=Release TOOLCHAIN=gcc INSTALL=--strip MESA=ON TEST=--test
 
     # }
 
@@ -75,9 +75,6 @@ before_install:
 install:
   # Info about OS
   - uname -a
-
-  # https://github.com/openregister/openregister-java/pull/340
-  - pyenv global system 3.6
 
   # Disable autoupdate
   # * https://github.com/Homebrew/brew/blob/7d31a70373edae4d8e78d91a4cbc05324bebc3ba/Library/Homebrew/manpages/brew.1.md.erb#L202
