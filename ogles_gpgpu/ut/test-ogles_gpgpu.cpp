@@ -351,7 +351,7 @@ TEST(OGLESGPGPUTest, SwizzleProc) {
         cv::Mat test = getTestImage(gWidth, gHeight, 10, true, TEXTURE_FORMAT);
         glActiveTexture(GL_TEXTURE0);
         ogles_gpgpu::VideoSource video;
-        ogles_gpgpu::GainProc noop;
+        ogles_gpgpu::SwizzleProc noop(ogles_gpgpu::SwizzleProc::kSwizzleRGBA);
         ogles_gpgpu::SwizzleProc swizzle(ogles_gpgpu::SwizzleProc::kSwizzleBGRA);
 
         video.set(&noop);
