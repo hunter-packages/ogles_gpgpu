@@ -368,15 +368,7 @@ TEST(OGLESGPGPUTest, SwizzleProc) {
 
         cv::cvtColor(result2, result2, cv::COLOR_RGBA2BGRA);
 
-        for(int y = 0; y < result1.rows; y++)
-        {
-            for(int x = 0; x < result1.cols; x++)
-            {
-                ASSERT_EQ(result1.at<cv::Vec4b>(y,x), result2.at<cv::Vec4b>(y,x));
-            }
-        }
-
-        ASSERT_TRUE(almost_equal(cv::Mat4b(result1), cv::Mat4b(result2), static_cast<unsigned char>(0)));
+        ASSERT_TRUE(almost_equal(cv::Mat4b(result1), cv::Mat4b(result2), static_cast<unsigned char>(2)));
     }
 }
 
