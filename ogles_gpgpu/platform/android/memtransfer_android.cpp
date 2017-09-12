@@ -4,61 +4,56 @@
 #include <android/native_window.h>
 #include <sys/system_properties.h>
 
-#include <stdlib.h>
 #include <dlfcn.h>
+#include <stdlib.h>
 
 // Check Android API at run-time: https://stackoverflow.com/a/33268925
 // Android Nougat API=24 blocks dlopen.
-static int get_android_api()
-{
+static int get_android_api() {
     static int api(-1);
-    if(api < 0)
-    {
+    if (api < 0) {
 #if __ANDROID_API__ < 21
-        char value[PROP_VALUE_MAX] = {'\0'};
+        char value[PROP_VALUE_MAX] = { '\0' };
         int length = __system_property_get("ro.build.version.sdk", value);
         api = atoi(value);
 #else
         api = popen("getprop ro.build.version.sdk");
 #endif
     }
-    
+
     return api;
 }
 
-extern "C" void *fake_dlopen(const char *filename, int flags);
-extern "C" int fake_dlclose(void *handle);
-extern "C" void *fake_dlsym(void *handle, const char *symbol);
+extern "C" void* fake_dlopen(const char* filename, int flags);
+extern "C" int fake_dlclose(void* handle);
+extern "C" void* fake_dlsym(void* handle, const char* symbol);
 
-void* try_dlopen(const char *lib, int flags) {
-    if(get_android_api() < 24) {
+void* try_dlopen(const char* lib, int flags) {
+    if (get_android_api() < 24) {
         void* dlEGLhndl = fake_dlopen(lib, flags);
-    }
-    else {
-#  ifdef __arm__
+    } else {
+#ifdef __arm__
         std::string path = "/system/lib/";
-#  else
+#else
         std::string path = "/system/lib64/";
-#  endif
+#endif
         path += lib;
-        void * dlEGLhndl = fake_dlopen(path.c_str(), flags);
+        void* dlEGLhndl = fake_dlopen(path.c_str(), flags);
     }
 }
 
-void* try_dlsym(void *handle, const char *symbol) {
-    if(get_android_api() < 24) {    
+void* try_dlsym(void* handle, const char* symbol) {
+    if (get_android_api() < 24) {
         return dlsym(handle, symbol);
-    }
-    else  {
+    } else {
         return fake_dlsym(handle, symbol);
     }
 }
 
-int try_dlclose(void *handle) {
-    if(get_android_api() < 24) {
+int try_dlclose(void* handle) {
+    if (get_android_api() < 24) {
         return dlclose(handle);
-    }
-    else {
+    } else {
         return fake_dlclose(handle);
     }
 }
@@ -152,7 +147,7 @@ enum {
 #define OG_DL_FUNC_CHECK(hndl, fn_ptr, fn)                                                          \
     if (!fn_ptr) {                                                                                  \
         OG_LOGERR("MemTransferAndroid", "could not dynamically link func '%s': %s", fn, dlerror()); \
-        try_dlclose(hndl);                                                                              \
+        try_dlclose(hndl);                                                                          \
         return false;                                                                               \
     }
 

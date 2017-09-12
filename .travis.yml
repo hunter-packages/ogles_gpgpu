@@ -46,8 +46,8 @@ matrix:
   include:
     # Linux {
 
-    - os: linux
-      env: CONFIG=Release TOOLCHAIN=gcc INSTALL=--strip MESA=ON TEST=--test
+#    - os: linux
+#      env: CONFIG=Release TOOLCHAIN=gcc INSTALL=--strip MESA=ON TEST=--test
 
     # }
 
