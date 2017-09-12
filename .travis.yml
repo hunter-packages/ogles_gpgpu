@@ -2,8 +2,9 @@
 
 # Original: https://github.com/forexample/hunter-simple/blob/master/.travis.yml
 
+# Workaround for https://github.com/travis-ci/travis-ci/issues/8363
 language:
-  - cpp
+  - minimal
 
 # Container-based infrastructure (Linux)
 # * https://docs.travis-ci.com/user/migrating-from-legacy/#How-can-I-use-container-based-infrastructure%3F
@@ -24,6 +25,9 @@ addons:
       - libegl1-mesa-dev
       - libosmesa6-dev
 
+      # glapi
+      - libgl1-mesa-dev
+
       # xorg-macros: https://github.com/BlueDragonX/xf86-input-mtrack/issues/27#issuecomment-186871891
       - xutils-dev
       - xserver-xorg-dev-lts-trusty
@@ -32,6 +36,8 @@ addons:
       - libncurses5:i386
       - libstdc++6:i386
       - zlib1g:i386
+
+      - python3-pip
 
       # Default GCC 4.8 is buggy:
       # * https://github.com/elucideye/drishti/issues/273#issuecomment-301297286
@@ -46,8 +52,8 @@ matrix:
   include:
     # Linux {
 
-#    - os: linux
-#      env: CONFIG=Release TOOLCHAIN=gcc INSTALL=--strip MESA=ON TEST=--test
+    - os: linux
+      env: CONFIG=Release TOOLCHAIN=gcc INSTALL=--strip MESA=ON TEST=--test
 
     # }
 

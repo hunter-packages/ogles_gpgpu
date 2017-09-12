@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <cstring> // memcpy
 
 #include <stdlib.h>
 
