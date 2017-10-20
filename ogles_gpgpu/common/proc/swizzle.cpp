@@ -11,11 +11,11 @@
 BEGIN_OGLES_GPGPU
 
 // clang-format off
-const char * SwizzleProc::fshaderRGBASrc = OG_TO_STR
-(
+const char * SwizzleProc::fshaderRGBASrc =
 #if defined(OGLES_GPGPU_OPENGLES)
- precision mediump float;
+OG_TO_STR(precision mediump float;)
 #endif
+OG_TO_STR(
  varying vec2 vTexCoord;
  uniform sampler2D uInputTex;
  void main()
@@ -26,11 +26,11 @@ const char * SwizzleProc::fshaderRGBASrc = OG_TO_STR
 // clang-format on
 
 // clang-format off
-const char * SwizzleProc::fshaderBGRASrc = OG_TO_STR
-(
+const char * SwizzleProc::fshaderBGRASrc = 
 #if defined(OGLES_GPGPU_OPENGLES)
- precision mediump float;
+OG_TO_STR(precision mediump float;)
 #endif
+OG_TO_STR(
  varying vec2 vTexCoord;
  uniform sampler2D uInputTex;
  void main()
@@ -41,11 +41,11 @@ const char * SwizzleProc::fshaderBGRASrc = OG_TO_STR
 // clang-format on
 
 // clang-format off
-const char * SwizzleProc::fshaderARGBSrc = OG_TO_STR
-(
+const char * SwizzleProc::fshaderARGBSrc = 
 #if defined(OGLES_GPGPU_OPENGLES)
- precision mediump float;
+OG_TO_STR(precision mediump float;)
 #endif
+OG_TO_STR(
  varying vec2 vTexCoord;
  uniform sampler2D uInputTex;
  void main()
@@ -56,11 +56,11 @@ const char * SwizzleProc::fshaderARGBSrc = OG_TO_STR
 // clang-format on
 
 // clang-format off
-const char * SwizzleProc::fshaderABGRSrc = OG_TO_STR
-(
+const char * SwizzleProc::fshaderABGRSrc = 
 #if defined(OGLES_GPGPU_OPENGLES)
- precision mediump float;
+OG_TO_STR(precision mediump float;)
 #endif
+OG_TO_STR(
  varying vec2 vTexCoord;
  uniform sampler2D uInputTex;
  void main()
@@ -71,11 +71,11 @@ const char * SwizzleProc::fshaderABGRSrc = OG_TO_STR
 // clang-format on
 
 // clang-format off
-const char * SwizzleProc::fshaderGRABSrc = OG_TO_STR
-(
+const char * SwizzleProc::fshaderGRABSrc = 
 #if defined(OGLES_GPGPU_OPENGLES)
- precision mediump float;
+OG_TO_STR(precision mediump float;)
 #endif
+OG_TO_STR(
  varying vec2 vTexCoord;
  uniform sampler2D uInputTex;
  void main()
