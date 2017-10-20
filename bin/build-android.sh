@@ -12,6 +12,7 @@ ARGS=(
     OGLES_GPGPU_BUILD_TESTS=ON
     OGLES_GPGPU_OPENGL_ES3="${OGLES_GPGPU_OPENGL_ES3}"
     HUNTER_CONFIGURATION_TYPES=${CONFIG}
+    GAUZE_ANDROID_USE_EMULATOR=YES
 )
 
 polly.py --toolchain ${TOOLCHAIN} --verbose --config ${CONFIG} --reconfig --open --test --fwd ${ARGS[@]} --test

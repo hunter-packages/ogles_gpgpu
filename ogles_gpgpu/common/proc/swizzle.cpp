@@ -13,7 +13,7 @@ BEGIN_OGLES_GPGPU
 // clang-format off
 const char * SwizzleProc::fshaderRGBASrc =
 #if defined(OGLES_GPGPU_OPENGLES)
- precision mediump float;
+OG_TO_STR(precision mediump float;)
 #endif
 OG_TO_STR(
  varying vec2 vTexCoord;
@@ -28,7 +28,7 @@ OG_TO_STR(
 // clang-format off
 const char * SwizzleProc::fshaderBGRASrc = 
 #if defined(OGLES_GPGPU_OPENGLES)
- precision mediump float;
+OG_TO_STR(precision mediump float;)
 #endif
 OG_TO_STR(
  varying vec2 vTexCoord;
@@ -43,7 +43,7 @@ OG_TO_STR(
 // clang-format off
 const char * SwizzleProc::fshaderARGBSrc = 
 #if defined(OGLES_GPGPU_OPENGLES)
- precision mediump float;
+OG_TO_STR(precision mediump float;)
 #endif
 OG_TO_STR(
  varying vec2 vTexCoord;
@@ -58,7 +58,7 @@ OG_TO_STR(
 // clang-format off
 const char * SwizzleProc::fshaderABGRSrc = 
 #if defined(OGLES_GPGPU_OPENGLES)
- precision mediump float;
+OG_TO_STR(precision mediump float;)
 #endif
 OG_TO_STR(
  varying vec2 vTexCoord;
@@ -73,7 +73,7 @@ OG_TO_STR(
 // clang-format off
 const char * SwizzleProc::fshaderGRABSrc = 
 #if defined(OGLES_GPGPU_OPENGLES)
- precision mediump float;
+OG_TO_STR(precision mediump float;)
 #endif
 OG_TO_STR(
  varying vec2 vTexCoord;

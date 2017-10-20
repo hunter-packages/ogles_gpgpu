@@ -13,7 +13,7 @@ BEGIN_OGLES_GPGPU
 // clang-format off
 const char * Rgb2LuvProc::fshaderRgb2LuvSrc = 
 #if defined(OGLES_GPGPU_OPENGLES)
-  precision highp float;
+OG_TO_STR(precision highp float;)
 #endif
 OG_TO_STR(
   varying vec2 vTexCoord;
