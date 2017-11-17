@@ -104,11 +104,12 @@ OG_TO_STR(
 
      mnmx4(v[2], v[3], v[4], v[5]);
 
-     v[5] = texture2D(inputImageTexture, textureCoordinate).rgb;
+     vec4 center = texture2D(inputImageTexture, textureCoordinate);
+     v[5] = center.rgb;
 
      mnmx3(v[3], v[4], v[5]);
 
-     gl_FragColor = vec4(v[4], 1.0);
+     gl_FragColor = vec4(v[4], center.a);
  });
 // clang-format on
 
