@@ -12,7 +12,7 @@ HunterGate(
   LOCAL
 )
 
-project(ogles_gpgpu VERSION 0.2.5)
+project(ogles_gpgpu VERSION 0.2.6)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
