@@ -46,7 +46,7 @@ addons:
 
 env:
   global:
-    - secure: "UW9uugVbUDdGwngqj69XFNkdrAo1xKZZo+XI/Aw+UsH2+f/bpsn4XAiy/o5Wn0RESpDdYKr4hWJsvBvuBAt43MFsLojgQcA6O0bmds8jCX6iNlspUJF1VfPysF40kscUH2jpobU23vQ4NV9aPZ8bK53KGUghfIB4j8iv84lD7CgYP7rI/pJAuQip3oGQNNR4LiO204FwzJkhSexmWKFMBc3gPD2Z7jGwQVzkZsO2oAZF101wqxDUxcoTBggq5zTEZL5OhoZuLRzk1t08I7L3P+N3jyqzgGr9RuzDUIZceR1KnyqegI2ij2vbFklIinxqiLkZnRWAXRhtScq2te9Sfj53CDrHg9F3FcTK9Bb1vgwCCXHqrOsmdHdsxWLU8iwqRDGD9JZj4s16MqeHkJapKDxf+ptS5c35UHN+J30fBhOHMGshhLFQTbfLzPChDliT+/tHqa3cFtO8M3FxBhuUiV5FBbMrSrGTTjqb1UrTCMZOKC1G90sUCVVGILMiji3I67h0+EE/WE53XHuGJven/+cZxRq8p4xqnDHlCmyKKbdJf6K5RULTL11fJcgHuWXoUn3tmYNWsPbtgSu2dAl0E40/LsF4uvBLzp/23a89l4lo2FH1+btpjN8SeJAhX0Qwwp1tSB1s2YrbdOtMhOqBQ0jvtgv4bjAbLpYhUgXGCrA="
+    - secure: "lymcX03VKPnytwpHgNqWI6JfGZuEHYpIOY9eM8BvT6ODXHgdTyGQND1VZZ96PJFYhs+pgAJl7iSZTwlKny/lLmwcTNAWu4+lJas/mgUQFRKfXLa0l5KosqVry8FmWmnSMtC2jsKPRF/fv9XeCEn9dOAZT1yfpLTeRZ22bpq/1/1+TVGqajfNZIX4W4kY0q/i/RK17RTsYCWrTeNU1y5C6hP2SK4mVAll5I2cJvF5SuxdOc6D19htIj6zOLSVadocPhWRD4yRoLLIlmX6IRmMqfTvArMv4D3aOVcU+Ep44oLyjny68st6mRdRa5TXqsUp6Wy/YCf1gEmXJ1CqyKtXASBhlB3Q5zPlTx6guMmJIJ5MMr7CNtoF86TQ47zNQAezHUnvZ+hckliOfkeoxnRHqBGvKLGN9IrKl3fNSRHFpvkXgSy0apnCyJKUaeABNhwoVlVuZw8D5Gyyhg+2OAX36KtHNeB6AvcSbZCJMGVqqidXi5p6slpz24Grdzh88pGtd4YXZzPuuy4uRWShl5wxsUKhmKz6uz3Q8ZYYlH7pa0xf9wRnInXYQKBqSzn8VkQIp5EFVIReh6nr4HsfisGUwoJFLZn6zjDvFzZVJHVzXfRj+Qx3nAMSNBXIAJieZL93yhNr/Erzftn0/M43SlYeO+GQFO54+28giNIF4UyNjTA="
 
 matrix:
   include:
@@ -63,12 +63,15 @@ matrix:
     # https://github.com/ingenue/hunter/blob/pkg.opencv/.travis.yml
 
     - os: osx
-      env: CONFIG=Release TOOLCHAIN=ios-nocodesign-9-3-arm64 INSTALL=--install MESA=OFF
+      osx_image: xcode8.3      
+      env: CONFIG=Release TOOLCHAIN=ios-nocodesign-10-3-arm64-dep-9-0-device-libcxx-hid-sections INSTALL=--install MESA=OFF
 
     - os: osx
-      env: CONFIG=Release TOOLCHAIN=osx-10-11 INSTALL=--install MESA=OFF
+      osx_image: xcode8.3      
+      env: CONFIG=Release TOOLCHAIN=osx-10-12 INSTALL=--install MESA=OFF
 
     - os: osx
+      osx_image: xcode8.3
       env: CONFIG=Release TOOLCHAIN=android-ndk-r10e-api-19-armeabi-v7a-neon INSTALL=--strip MESA=OFF TEST=--test
 
     # }

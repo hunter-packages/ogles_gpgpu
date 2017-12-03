@@ -450,85 +450,145 @@ TEST(OGLESGPGPUTest, Yuv2RgbProc) {
         cv::Vec3b& value = yuv.at<cv::Vec3b>(0, 0);
 
         // Create constant color buffers:
-        std::vector<std::uint8_t> y(gWidth * gHeight, value[0]), uv(gWidth * gHeight / 2);
-        for (int i = 0; i < uv.size(); i += 2) {
-            uv[i + 0] = value[1];
-            uv[i + 1] = value[2];
-        }
 
+        // Test interleaved NV12 format:
+        std::vector<std::uint8_t> y(gWidth * gHeight, value[0]);
+        
+        { // ##### Test interleaved NV21 format ###########
+            std::vector<std::uint8_t> uv(gWidth * gHeight / 2);
+            for (int i = 0; i < uv.size(); i += 2) {
+                uv[i + 0] = value[1];
+                uv[i + 1] = value[2];
+            }
+            
 #if defined(OGLES_GPGPU_OPENGL_ES3)
-        // Luminance texture:
-        GLTexture luminanceTexture(gWidth, gHeight, GL_RED, y.data(), GL_R8);
-        ASSERT_EQ(glGetError(), GL_NO_ERROR);
-        std::cout << "ES3 k601VideoRange kRG" << std::endl;
+            // Luminance texture:
+            GLTexture luminanceTexture(gWidth, gHeight, GL_RED, y.data(), GL_R8);
+            ASSERT_EQ(glGetError(), GL_NO_ERROR);
+            std::cout << "ES3 k601VideoRange kRG" << std::endl;
 
-        // Chrominance texture (interleaved):
-        GLTexture chrominanceTexture(gWidth / 2, gHeight / 2, GL_RG, uv.data(), GL_RG8);
-        ASSERT_EQ(glGetError(), GL_NO_ERROR);
+            // Chrominance texture (interleaved):
+            GLTexture chrominanceTexture(gWidth / 2, gHeight / 2, GL_RG, uv.data(), GL_RG8);
+            ASSERT_EQ(glGetError(), GL_NO_ERROR);
 
-        ogles_gpgpu::Yuv2RgbProc yuv2rgb(ogles_gpgpu::Yuv2RgbProc::k601VideoRange, ogles_gpgpu::Yuv2RgbProc::kRG);
+            ogles_gpgpu::Yuv2RgbProc yuv2rgb(ogles_gpgpu::Yuv2RgbProc::k601VideoRange, ogles_gpgpu::Yuv2RgbProc::kRG);
 #else
-        // Luminance texture:
-        GLTexture luminanceTexture(gWidth, gHeight, GL_LUMINANCE, y.data(), GL_LUMINANCE);
-        ASSERT_EQ(glGetError(), GL_NO_ERROR);
+            // Luminance texture:
+            GLTexture luminanceTexture(gWidth, gHeight, GL_LUMINANCE, y.data(), GL_LUMINANCE);
+            ASSERT_EQ(glGetError(), GL_NO_ERROR);
 
-        // Chrominance texture (interleaved):
-        GLTexture chrominanceTexture(gWidth / 2, gHeight / 2, GL_LUMINANCE_ALPHA, uv.data(), GL_LUMINANCE_ALPHA);
-        ASSERT_EQ(glGetError(), GL_NO_ERROR);
+            // Chrominance texture (interleaved):
+            GLTexture chrominanceTexture(gWidth / 2, gHeight / 2, GL_LUMINANCE_ALPHA, uv.data(), GL_LUMINANCE_ALPHA);
+            ASSERT_EQ(glGetError(), GL_NO_ERROR);
 
-        ogles_gpgpu::Yuv2RgbProc yuv2rgb(ogles_gpgpu::Yuv2RgbProc::k601VideoRange, ogles_gpgpu::Yuv2RgbProc::kLA);
+            ogles_gpgpu::Yuv2RgbProc yuv2rgb(ogles_gpgpu::Yuv2RgbProc::k601VideoRange, ogles_gpgpu::Yuv2RgbProc::kLA);
 #endif
 
-        // Set pixel data format for input data to <fmt>. Must be set before init() / reinit().
-        yuv2rgb.setExternalInputDataFormat(0); // for yuv
+            // Set pixel data format for input data to <fmt>. Must be set before init() / reinit().
+            yuv2rgb.setExternalInputDataFormat(0); // for yuv
 
-        // Init the processor for input frames of size <inW>x<inH> which is at position <order>
-        // in the processing pipeline.
-        yuv2rgb.init(gWidth, gHeight, 0, true);
+            // Init the processor for input frames of size <inW>x<inH> which is at position <order>
+            // in the processing pipeline.
+            yuv2rgb.init(gWidth, gHeight, 0, true);
 
-        // Be sure to specify stanrdard (GL_RGBA) output texture type
-        // for this case where input textures == 0 are handled as special
-        // separate Y and UV textures.
-        yuv2rgb.getMemTransferObj()->setOutputPixelFormat(TEXTURE_FORMAT);
+            // Be sure to specify standard (GL_RGBA) output texture type
+            // for this case where input textures == 0 are handled as special
+            // separate Y and UV textures.
+            yuv2rgb.getMemTransferObj()->setOutputPixelFormat(TEXTURE_FORMAT);
 
-        // Create an FBO
-        yuv2rgb.createFBOTex(false);
+            // Create an FBO
+            yuv2rgb.createFBOTex(false);
 
-        // Provide the input Y and UV textures:
-        yuv2rgb.setTextures(luminanceTexture, chrominanceTexture);
+            // Provide the input Y and UV textures:
+            yuv2rgb.setTextures(luminanceTexture, chrominanceTexture);
 
-        // Perform the rendering
-        yuv2rgb.render();
+            // Perform the rendering
+            yuv2rgb.render();
 
-        cv::Mat result;
-        getImage(yuv2rgb, result);
-        ASSERT_FALSE(result.empty());
+            cv::Mat result;
+            getImage(yuv2rgb, result);
+            ASSERT_FALSE(result.empty());
 
-        auto mu = cv::mean(result);
+            auto mu = cv::mean(result);
 
 #if OGLES_GPGPU_DEBUG_YUV
-        ogles_gpgpu::GainProc yProc;
-        yProc.prepare(gWidth, gHeight);
-        yProc.process(luminanceTexture, 1, GL_TEXTURE_2D);
-        cv::Mat yProcOut;
-        getImage(yProc, yProcOut);
+            ogles_gpgpu::GainProc yProc;
+            yProc.prepare(gWidth, gHeight);
+            yProc.process(luminanceTexture, 1, GL_TEXTURE_2D);
+            cv::Mat yProcOut;
+            getImage(yProc, yProcOut);
 
-        ogles_gpgpu::GainProc uvProc;
-        uvProc.prepare(gWidth, gHeight);
-        uvProc.process(chrominanceTexture, 1, GL_TEXTURE_2D);
-        cv::Mat uvProcOut;
-        getImage(uvProc, uvProcOut);
+            ogles_gpgpu::GainProc uvProc;
+            uvProc.prepare(gWidth, gHeight);
+            uvProc.process(chrominanceTexture, 1, GL_TEXTURE_2D);
+            cv::Mat uvProcOut;
+            getImage(uvProc, uvProcOut);
 
-        std::cout << "yuv_in  : " << value << std::endl;
-        std::cout << "rgb_out : " << mu << std::endl;
-        std::cout << "y_      : " << cv::mean(yProcOut) << std::endl;
-        std::cout << "uv_     : " << cv::mean(uvProcOut) << std::endl;
-        std::cout << "Format: " << int(yProc.getMemTransferObj()->getOutputPixelFormat()) << std::endl;
+            std::cout << "yuv_in  : " << value << std::endl;
+            std::cout << "rgb_out : " << mu << std::endl;
+            std::cout << "y_      : " << cv::mean(yProcOut) << std::endl;
+            std::cout << "uv_     : " << cv::mean(uvProcOut) << std::endl;
+            std::cout << "Format: " << int(yProc.getMemTransferObj()->getOutputPixelFormat()) << std::endl;
 #endif // OGLES_GPGPU_DEBUG_YUV
 
-        ASSERT_LE(mu[0], 8);
-        ASSERT_GE(mu[1], 250);
-        ASSERT_LE(mu[2], 8);
+            ASSERT_LE(mu[0], 8);
+            ASSERT_GE(mu[1], 250);
+            ASSERT_LE(mu[2], 8);
+        }
+
+        {
+            // ########### Test planar YV12 format ############
+            std::vector<std::uint8_t> u(gWidth * gHeight/4), v(gWidth * gHeight/4);
+            for (int i = 0; i < u.size(); i ++) {
+                u[i] = value[1];
+                v[i] = value[2];
+            }        
+        
+            // Luminance texture:
+            GLTexture luminanceTexture(gWidth, gHeight, GL_LUMINANCE, y.data(), GL_LUMINANCE);
+            ASSERT_EQ(glGetError(), GL_NO_ERROR);
+
+            // U texture:
+            GLTexture uTexture(gWidth / 2, gHeight / 2, GL_LUMINANCE, u.data(), GL_LUMINANCE);
+            ASSERT_EQ(glGetError(), GL_NO_ERROR);
+            
+            // V texture:
+            GLTexture vTexture(gWidth / 2, gHeight / 2, GL_LUMINANCE, v.data(), GL_LUMINANCE);
+            ASSERT_EQ(glGetError(), GL_NO_ERROR);            
+
+            ogles_gpgpu::Yuv2RgbProc yuv2rgb(ogles_gpgpu::Yuv2RgbProc::k601VideoRange, ogles_gpgpu::Yuv2RgbProc::kYUV12);
+
+            // Set pixel data format for input data to <fmt>. Must be set before init() / reinit().
+            yuv2rgb.setExternalInputDataFormat(0); // for yuv
+
+            // Init the processor for input frames of size <inW>x<inH> which is at position <order>
+            // in the processing pipeline.
+            yuv2rgb.init(gWidth, gHeight, 0, true);
+
+            // Be sure to specify standard (GL_RGBA) output texture type
+            // for this case where input textures == 0 are handled as special
+            // separate Y and UV textures.
+            yuv2rgb.getMemTransferObj()->setOutputPixelFormat(TEXTURE_FORMAT);
+
+            // Create an FBO
+            yuv2rgb.createFBOTex(false);
+
+            // Provide the input Y and UV textures:
+            yuv2rgb.setTextures(luminanceTexture, uTexture, vTexture);
+
+            // Perform the rendering
+            yuv2rgb.render();
+
+            cv::Mat result;
+            getImage(yuv2rgb, result);
+            ASSERT_FALSE(result.empty());
+
+            auto mu = cv::mean(result);
+
+            ASSERT_LE(mu[0], 8);
+            ASSERT_GE(mu[1], 250);
+            ASSERT_LE(mu[2], 8);
+        }
     }
 }
 
