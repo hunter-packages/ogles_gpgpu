@@ -144,6 +144,65 @@ OG_TO_STR(
  });
 // clang-format on
 
+// ----YUV12----
+
+// clang-format off
+const char *kGPUImageYUVVideoRangeConversionForYUV12FragmentShaderString =
+#if defined(OGLES_GPGPU_OPENGLES)
+OG_TO_STR(precision mediump float;)
+#endif
+OG_TO_STR(
+                                                                                  
+ varying vec2 vTexCoord;
+
+ uniform sampler2D luminanceTexture;
+ uniform sampler2D uTexture;
+ uniform sampler2D vTexture; 
+ uniform mat3 colorConversionMatrix;
+
+ void main()
+ {
+     vec3 yuv;
+     vec3 rgb;
+
+     yuv.x = texture2D(luminanceTexture, vTexCoord).r - (16.0/255.0);
+     yuv.y = texture2D(uTexture, vTexCoord).r - 0.5;
+     yuv.z = texture2D(vTexture, vTexCoord).r - 0.5;
+     
+     rgb = colorConversionMatrix * yuv;
+
+     gl_FragColor = vec4(rgb, 1);          
+ });
+// clang-format on
+
+// clang-format off
+const char *kGPUImageYUVFullRangeConversionForYUV12FragmentShaderString =
+#if defined(OGLES_GPGPU_OPENGLES)
+OG_TO_STR(precision mediump float;)
+#endif
+OG_TO_STR(
+                                                                                  
+ varying vec2 vTexCoord;
+
+ uniform sampler2D luminanceTexture;
+ uniform sampler2D uTexture;
+ uniform sampler2D vTexture; 
+ uniform mat3 colorConversionMatrix;
+
+ void main()
+ {
+     vec3 yuv;
+     vec3 rgb;
+
+     yuv.x = texture2D(luminanceTexture, vTexCoord).r;
+     yuv.y = texture2D(uTexture, vTexCoord).r - 0.5;
+     yuv.z = texture2D(vTexture, vTexCoord).r - 0.5;
+     rgb = colorConversionMatrix * yuv;
+
+     gl_FragColor = vec4(rgb, 1);          
+ });
+// clang-format on
+
 // =================================================================================
 
 Yuv2RgbProc::Yuv2RgbProc(YUVKind yuvKind, ChannelKind channelKind)
@@ -169,6 +228,12 @@ void Yuv2RgbProc::setTextures(GLuint luminance, GLuint chrominance) {
     chrominanceTexture = chrominance;
 }
 
+void Yuv2RgbProc::setTextures(GLuint luminance, GLuint u, GLuint v) {
+    luminanceTexture = luminance;
+    uTexture = u;
+    vTexture = v;
+}
+
 void Yuv2RgbProc::filterShaderSetup(const char* vShaderSrc, const char* fShaderSrc, GLenum target) {
 
     ProcBase::createShader(vShaderSrc, fShaderSrc, target);
@@ -180,7 +245,15 @@ void Yuv2RgbProc::filterShaderSetup(const char* vShaderSrc, const char* fShaderS
     yuvConversionPositionAttribute = shParamAPos; // "aPos"
     yuvConversionTextureCoordinateAttribute = shParamATexCoord; // "aTexCoord"
     yuvConversionLuminanceTextureUniform = shader->getParam(UNIF, "luminanceTexture");
-    yuvConversionChrominanceTextureUniform = shader->getParam(UNIF, "chrominanceTexture");
+    
+    if(channelKind == kYUV12) {
+        yuvConversionUTextureUniform = shader->getParam(UNIF, "uTexture");
+        yuvConversionVTextureUniform = shader->getParam(UNIF, "vTexture");
+    }
+    else {
+        yuvConversionChrominanceTextureUniform = shader->getParam(UNIF, "chrominanceTexture");
+    }
+    
     yuvConversionMatrixUniform = shader->getParam(UNIF, "colorConversionMatrix");
     Tools::checkGLErr(getProcName(), "getParam()");
 
@@ -224,6 +297,17 @@ int Yuv2RgbProc::init(int inW, int inH, unsigned int order, bool prepareForExter
             break;
         }
         break;
+    case kYUV12:
+        switch (yuvKind) {
+            case k601VideoRange:
+                filterInit(FilterProcBase::vshaderDefault, kGPUImageYUVVideoRangeConversionForYUV12FragmentShaderString);
+                break;
+            case k601FullRange:
+            case k709Default:
+                filterInit(FilterProcBase::vshaderDefault, kGPUImageYUVFullRangeConversionForYUV12FragmentShaderString);
+                break;
+        }
+        break;
     }
 
     return 1;
@@ -239,9 +323,22 @@ void Yuv2RgbProc::filterRenderPrepare() {
     glBindTexture(GL_TEXTURE_2D, luminanceTexture);
     glUniform1i(yuvConversionLuminanceTextureUniform, 4);
 
-    glActiveTexture(GL_TEXTURE5);
-    glBindTexture(GL_TEXTURE_2D, chrominanceTexture);
-    glUniform1i(yuvConversionChrominanceTextureUniform, 5);
+    if(channelKind >= kYUV12)
+    {
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, uTexture);
+        glUniform1i(yuvConversionUTextureUniform, 5);
+
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_2D, vTexture);
+        glUniform1i(yuvConversionVTextureUniform, 6);
+    }
+    else
+    {
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, chrominanceTexture);
+        glUniform1i(yuvConversionChrominanceTextureUniform, 5);
+    }
 
     glUniformMatrix3fv(yuvConversionMatrixUniform, 1, GL_FALSE, _preferredConversion);
 }

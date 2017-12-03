@@ -24,8 +24,9 @@ namespace ogles_gpgpu {
 class Yuv2RgbProc : public FilterProcBase {
 public:
     enum ChannelKind {
-        kLA, // typically ES 2.0
-        kRG, // typically ES 3.0
+        kLA,       // for interleaved NV21 typically ES 2.0
+        kRG,       // for interleaved NV21 typically ES 3.0
+        kYUV12     // for planar YUV12
     };
 
     enum YUVKind {
@@ -58,11 +59,19 @@ public:
     virtual int render(int position = 0);
 
     /**
-    * Create the shader program
-    */
+     * Create the shader program
+     */
     virtual void filterShaderSetup(const char* vShaderSrc, const char* fShaderSrc, GLenum target);
 
+    /**
+     * Set input (planar) luminance and (interleaved) chrominance textures (NV12).
+     */
     void setTextures(GLuint luminanceTexture, GLuint chrominanceTexture);
+    
+    /**
+     * Set input planar luminance and planr U and V textures (YUV12).
+     */
+    void setTextures(GLuint luminanceTexture, GLuint uTexture, GLuint vTexture);
 
 private:
     virtual void filterRenderPrepare();
@@ -71,13 +80,21 @@ private:
     static const char* fshaderYuv2RgbSrc; // fragment shader source
 
     GLuint luminanceTexture;
+
+    // For (interleaved) NV{12,21}
     GLuint chrominanceTexture;
+    GLint yuvConversionChrominanceTextureUniform;
+    
+    // For (planar) YUV12
+    GLuint uTexture;
+    GLint yuvConversionUTextureUniform;
+    GLuint vTexture;
+    GLint yuvConversionVTextureUniform;
 
     GLint yuvConversionPositionAttribute;
     GLint yuvConversionTextureCoordinateAttribute;
 
     GLint yuvConversionLuminanceTextureUniform;
-    GLint yuvConversionChrominanceTextureUniform;
     GLint yuvConversionMatrixUniform;
 
     const GLfloat* _preferredConversion;
