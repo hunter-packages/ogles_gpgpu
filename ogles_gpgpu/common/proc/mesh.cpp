@@ -46,11 +46,13 @@ MeshShaderProc::MeshShaderProc(const VertexBuffer& vertices, const CoordBuffer& 
     , vertices(vertices)
     , coords(coords)
 {
-    memset(MVP.data, 0, sizeof(MVP.data));
-    for (int i = 0; i < 4; i++) {
-        MVP.data[i][i] = 1.f;
-    }
-    
+    for(int y = 0; y < 4; y++) {
+        for(int x = 0; x < 4; x++) {
+            MVP.data[y][x] = 0.f;
+        }
+        MVP.data[y][y] = 1.f;            
+    }    
+
     // Compile utility shader:
     shader = std::make_shared<Shader>();
     if (!shader->buildFromSrc(vshaderMeshSrc, fshaderMeshSrc))

@@ -783,9 +783,11 @@ TEST(OGLESGPGPUTest, MeshProc) {
 
         const std::array<int,4> index {{0,1,3}};
         ogles_gpgpu::Mat44f matrix;
-        memset(matrix.data, 0, sizeof(matrix.data));
         for(int y = 0; y < 4; y++) {
-            matrix.data[y][y] = 1.f;
+            for(int x = 0; x < 4; x++) {
+                matrix.data[y][x] = 0.f;
+            }
+            matrix.data[y][y] = 1.f;            
         }
         
         for(int y = 0; y < 3; y++) {
@@ -801,6 +803,11 @@ TEST(OGLESGPGPUTest, MeshProc) {
         cv::Mat result;
         getImage(mesh, result);
         ASSERT_FALSE(result.empty());
+
+        std::cout << "MESH_input_mu: " << cv::mean(result) << std::endl;
+        std::cout << "MESH_input: " << test(cv::Rect(100,100,4,4)) << std::endl;
+        std::cout << "MESH_output_mu: " << cv::mean(test) << std::endl;        
+        std::cout << "MESH_output: " << result(cv::Rect(100,100,4,4)) << std::endl;
         
         auto error = cv::norm(result, test);
         ASSERT_LE(error, 1);
