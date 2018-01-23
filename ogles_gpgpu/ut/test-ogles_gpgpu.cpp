@@ -64,6 +64,7 @@ static cv::Vec3b torgb(const cv::Vec3b &p) { return cv::Vec3b(p[2], p[1], p[0]);
 #include "../common/proc/rgb2hsv.h"      // [0]
 #include "../common/proc/hsv2rgb.h"      // [0]
 #include "../common/proc/remap.h"        // [-]
+#include "../common/proc/mesh.h"         // [x]
 // clang-format on
 
 // virtual (tested indirectly)
@@ -544,16 +545,22 @@ TEST(OGLESGPGPUTest, Yuv2RgbProc) {
                 v[i] = value[2];
             }        
         
+#if defined(GL_LUMINANCE)
+            const GLenum glLuminance = GL_LUMINANCE;
+#else
+            const GLenum glLuminance = GL_RED;
+#endif
+            
             // Luminance texture:
-            GLTexture luminanceTexture(gWidth, gHeight, GL_LUMINANCE, y.data(), GL_LUMINANCE);
+            GLTexture luminanceTexture(gWidth, gHeight, glLuminance, y.data(), glLuminance);
             ASSERT_EQ(glGetError(), GL_NO_ERROR);
 
             // U texture:
-            GLTexture uTexture(gWidth / 2, gHeight / 2, GL_LUMINANCE, u.data(), GL_LUMINANCE);
+            GLTexture uTexture(gWidth / 2, gHeight / 2, glLuminance, u.data(), glLuminance);
             ASSERT_EQ(glGetError(), GL_NO_ERROR);
             
             // V texture:
-            GLTexture vTexture(gWidth / 2, gHeight / 2, GL_LUMINANCE, v.data(), GL_LUMINANCE);
+            GLTexture vTexture(gWidth / 2, gHeight / 2, glLuminance, v.data(), glLuminance);
             ASSERT_EQ(glGetError(), GL_NO_ERROR);            
 
             ogles_gpgpu::Yuv2RgbProc yuv2rgb(ogles_gpgpu::Yuv2RgbProc::k601VideoRange, ogles_gpgpu::Yuv2RgbProc::kYUV12);
@@ -718,6 +725,85 @@ TEST(OGLESGPGPUTest, TransformProc) {
         cv::Mat result;
         getImage(transform, result);
         ASSERT_FALSE(result.empty());
+    }
+}
+
+TEST(OGLESGPGPUTest, MeshProc) {
+    auto context = aglet::GLContext::create(aglet::GLContext::kAuto, {}, gWidth, gHeight, gVersion);
+    (*context)();
+    ASSERT_TRUE(context && (*context));
+    ASSERT_EQ(glGetError(), GL_NO_ERROR);
+    if (context && *context) {
+
+        cv::Mat test = getTestImage(gWidth, gHeight, 10, true, TEXTURE_FORMAT);        
+
+        const float w = gWidth;
+        const float h = gHeight;
+        std::vector<std::array<float,3>> verticesT, vertices
+        {
+            {{0.f, 0.f, 0.f}},
+            {{w, 0.f, 0.f}},
+            {{w, h, 0.f}},
+            {{0.f, h, 0.f}},
+            {{w/2.f,h/2.f,0.f}} // demonstrate stretching center point
+        };
+        
+        std::vector<std::array<float,2>> coordsT, coords
+        {
+            {{0.f, 0.f}},
+            {{1.f, 0.f}},
+            {{1.f, 1.f}},
+            {{0.f, 1.f}},
+            {{0.5f,0.5f}} // center point
+        };
+        
+        // Create explicit GL_TRIANGLES vertices and coords
+        cv::Mat2f xy(gHeight, gWidth);
+        
+        for(int y = 0; y < 4; y++)
+        {
+            for(const auto &i : {(y+0)%4,(y+1)%4,4})
+            {
+                coordsT.push_back(coords[i]);
+                verticesT.push_back(vertices[i]);
+            }
+        }
+        
+        
+        glActiveTexture(GL_TEXTURE0);
+        ogles_gpgpu::VideoSource video;
+        ogles_gpgpu::MeshShaderProc mesh(verticesT, coordsT);
+        mesh.setTriangleKind(GL_TRIANGLES);
+
+        video.set(&mesh);
+
+        const cv::Matx33f S(cv::Matx33f::diag({(2.f/gWidth),2.f/gHeight,1.f}));
+        const cv::Matx33f T(1.f,0.f,-1.f,0.f,1.f,-1.f,0.f,0.f,1.f);
+        const cv::Matx33f Ht = (T * S).t();
+
+        const std::array<int,4> index {{0,1,3}};
+        ogles_gpgpu::Mat44f matrix;
+        memset(matrix.data, 0, sizeof(matrix.data));
+        for(int y = 0; y < 4; y++) {
+            matrix.data[y][y] = 1.f;
+        }
+        
+        for(int y = 0; y < 3; y++) {
+            for(int x = 0; x < 3; x++) {
+                matrix.data[index[y]][index[x]] = Ht(y,x);
+            }
+        }
+
+        mesh.setModelViewProjection(matrix);
+
+        video({ test.cols, test.rows }, test.ptr<void>(), true, 0, TEXTURE_FORMAT);
+
+        cv::Mat result;
+        getImage(mesh, result);
+        ASSERT_FALSE(result.empty());
+        
+        auto error = cv::norm(result, test);
+        ASSERT_LE(error, 1);
     }
 }
 

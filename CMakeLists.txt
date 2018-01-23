@@ -7,9 +7,9 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
 
 include("cmake/HunterGate.cmake")
 HunterGate(
-  URL "https://github.com/ruslo/hunter/archive/v0.19.177.tar.gz"
-  SHA1 "3bec46f57644df3114a549d4c889660264aeda24"
-  LOCAL
+  URL "https://github.com/ruslo/hunter/archive/v0.19.232.tar.gz"
+  SHA1 "a412c45fe4c5a72fed386f62dd8d753bd4fd3d11"
+  LOCAL    
 )
 
 project(ogles_gpgpu VERSION 0.2.7)
