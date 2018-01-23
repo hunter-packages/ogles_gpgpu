@@ -769,7 +769,6 @@ TEST(OGLESGPGPUTest, MeshProc) {
             }
         }
         
-        
         glActiveTexture(GL_TEXTURE0);
         ogles_gpgpu::VideoSource video;
         ogles_gpgpu::MeshShaderProc mesh(verticesT, coordsT);
@@ -804,12 +803,7 @@ TEST(OGLESGPGPUTest, MeshProc) {
         getImage(mesh, result);
         ASSERT_FALSE(result.empty());
 
-        std::cout << "MESH_input_mu: " << cv::mean(result) << std::endl;
-        std::cout << "MESH_input: " << test(cv::Rect(100,100,4,4)) << std::endl;
-        std::cout << "MESH_output_mu: " << cv::mean(test) << std::endl;        
-        std::cout << "MESH_output: " << result(cv::Rect(100,100,4,4)) << std::endl;
-        
-        auto error = cv::norm(result, test);
+        auto error = cv::norm(result, test, cv::NORM_L1) / static_cast<float>(gWidth*gHeight*4);
         ASSERT_LE(error, 1);
     }
 }
