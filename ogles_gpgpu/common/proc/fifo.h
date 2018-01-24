@@ -66,6 +66,10 @@ public:
         return m_count;
     }
 
+    virtual void reset() {
+        m_inputIndex = m_outputIndex = m_count = 0;
+    }
+
 protected:
     virtual void prepare(int inW, int inH, int index = 0, int position = 0);
     virtual void process(int position, Logger logger = {});
