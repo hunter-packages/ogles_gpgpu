@@ -60,6 +60,8 @@ sugar_files(
     lowpass.h#
     median.cpp#
     median.h#
+    mesh.cpp
+    mesh.h
     nms.cpp#
     nms.h#
     pyramid.cpp#
