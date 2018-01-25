@@ -7,8 +7,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
 
 include("cmake/HunterGate.cmake")
 HunterGate(
-  URL "https://github.com/ruslo/hunter/archive/v0.19.232.tar.gz"
-  SHA1 "a412c45fe4c5a72fed386f62dd8d753bd4fd3d11"
+  URL "https://github.com/ruslo/hunter/archive/v0.19.234.tar.gz"
+  SHA1 "3deec1041bd01c91e78269522b901fbab3a765e5"
   LOCAL    
 )
 
@@ -30,8 +30,8 @@ option(OGLES_GPGPU_USE_OSMESA "Use MESA CPU OpenGL (via glfw)" OFF)
 option(OGLES_GPGPU_OPENGL_ES3 "Use OpenGL ES 3.0" OFF)
 
 # See: cmake/Hunter/config.cmake
-hunter_add_package(Sugar)
-include("${SUGAR_ROOT}/cmake/Sugar")
+hunter_add_package(sugar)
+find_package(sugar CONFIG REQUIRED)
 include(sugar_include)
 
 message("Android: ${ANDROID}")
