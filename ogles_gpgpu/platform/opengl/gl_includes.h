@@ -46,7 +46,6 @@
 #  if defined(OGLES_GPGPU_OPENGL_ES3)
 #    include <GLES3/gl3.h>
 #    include <GLES3/gl3ext.h>
-//#    include <GLES2/gl2ext.h> // gl3ext.h is empty
 #  else
 #    include <GLES2/gl2.h>
 #    include <GLES2/gl2ext.h>
