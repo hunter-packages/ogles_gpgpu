@@ -8,27 +8,27 @@ void ProcInterface::setOutputPboCount(int count) {
     outputPboCount = count;
 }
 
-void ProcInterface::setPreProcessCallback(ProcDelegate& cb) {
+void ProcInterface::setPreProcessCallback(const ProcDelegate& cb) {
     m_preProcessCallback = cb;
 }
 
-void ProcInterface::setPostProcessCallback(ProcDelegate& cb) {
+void ProcInterface::setPostProcessCallback(const ProcDelegate& cb) {
     m_postProcessCallback = cb;
 }
 
-void ProcInterface::setPreRenderCallback(ProcDelegate& cb) {
+void ProcInterface::setPreRenderCallback(const ProcDelegate& cb) {
     m_preRenderCallback = cb;
 }
 
-void ProcInterface::setPostRenderCallback(ProcDelegate& cb) {
+void ProcInterface::setPostRenderCallback(const ProcDelegate& cb) {
     m_postRenderCallback = cb;
 }
 
-void ProcInterface::setPreInitCallback(ProcDelegate& cb) {
+void ProcInterface::setPreInitCallback(const ProcDelegate& cb) {
     m_preInitCallback = cb;
 }
 
-void ProcInterface::setPostInitCallback(ProcDelegate& cb) {
+void ProcInterface::setPostInitCallback(const ProcDelegate& cb) {
     m_postInitCallback = cb;
 }
 
@@ -86,8 +86,8 @@ void ProcInterface::process(GLuint id, GLuint useTexUnit, GLenum target, int ind
         }
     }
 
-    if (m_postRenderCallback) {
-        m_postRenderCallback(this);
+    if (m_postProcessCallback) {
+        m_postProcessCallback(this);
     }
 }
 

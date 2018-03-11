@@ -28,6 +28,7 @@
 #    if defined(OGLES_GPGPU_OPENGL_ES3)
 #      include <OpenGLES/ES3/gl.h>
 #      include <OpenGLES/ES3/glext.h>
+#      include <OpenGLES/ES2/glext2.h>
 #    else
 #      include <OpenGLES/ES2/gl.h>
 #      include <OpenGLES/ES2/glext.h>
@@ -35,7 +36,7 @@
 #  else
 #    if defined(OGLES_GPGPU_OPENGL_ES3)
 #      include <OpenGL/gl3.h>
-#      include <OpenGL/gl3ext.h>
+#      include <OpenGL/gl2ext.h>
 #    else
 #      include <OpenGL/gl.h>
 #      include <OpenGL/glext.h>
@@ -43,8 +44,22 @@
 #  endif
 #elif defined(__ANDROID__) || defined(ANDROID)
 #  if defined(OGLES_GPGPU_OPENGL_ES3)
+// ::: https://stackoverflow.com/q/31003863 :::
+// According to the Khronos OpenGL ES Registry, the extension header for 
+// GLES 3.0 is actually <GLES2/gl2ext.h>.  gl3ext.h should be empty and 
+// provided only for legacy compatibility. Thus, if you want to include 
+// GLES 3.0 headers, you should do:
+//
+// ::: https://stackoverflow.com/a/31025110 :::
+// ...this is fixed in API-21. However, if you still need 
+// to use API-18 or API-19, there is a work-around. You can simply:
+// [define __gl2_h_] when gl2ext.h includes gl2.h, the defined include 
+// guard will cause the contents of gl2.h to be skipped.
+#     if __ANDROID_API__ < 21
+#       define __gl2_h_
+#     endif
 #    include <GLES3/gl3.h>
-#    include <GLES3/gl3ext.h>
+#    include <GLES2/gl2ext.h>  // GL_TEXTURE_EXTERNAL_OES, etc
 #  else
 #    include <GLES2/gl2.h>
 #    include <GLES2/gl2ext.h>

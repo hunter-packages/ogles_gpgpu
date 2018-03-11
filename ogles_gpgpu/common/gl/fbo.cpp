@@ -35,11 +35,6 @@ FBO::FBO(bool doAlloc) {
 
 FBO::~FBO() {
     destroyFramebuffer();
-
-    // attached texture will be destroyed together with memTransfer instance
-    if (memTransfer) {
-        delete memTransfer;
-    }
 }
 
 void FBO::bind() {

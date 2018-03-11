@@ -264,32 +264,32 @@ public:
     /**
      * Set a pre processing callback
      */
-    virtual void setPreProcessCallback(ProcDelegate& cb);
+    virtual void setPreProcessCallback(const ProcDelegate& cb);
 
     /**
      * Set a pre processing callback
      */
-    virtual void setPostProcessCallback(ProcDelegate& cb);
+    virtual void setPostProcessCallback(const ProcDelegate& cb);
 
     /**
      * Set a pre render callback
      */
-    virtual void setPreRenderCallback(ProcDelegate& cb);
+    virtual void setPreRenderCallback(const ProcDelegate& cb);
 
     /**
      * Set a post render callback
      */
-    virtual void setPostRenderCallback(ProcDelegate& cb);
+    virtual void setPostRenderCallback(const ProcDelegate& cb);
 
     /**
      * Set a pre init callback
      */
-    virtual void setPreInitCallback(ProcDelegate& cb);
+    virtual void setPreInitCallback(const ProcDelegate& cb);
 
     /**
      * Set a post init callback
      */
-    virtual void setPostInitCallback(ProcDelegate& cb);
+    virtual void setPostInitCallback(const ProcDelegate& cb);
 
 protected:
     /**

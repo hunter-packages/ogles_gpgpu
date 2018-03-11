@@ -20,6 +20,8 @@
 #include "../../gl/memtransfer.h"
 #include "../../gl/shader.h"
 
+#include <memory>
+
 #define OGLES_GPGPU_QUAD_VERTICES 4
 #define OGLES_GPGPU_QUAD_COORDS_PER_VERTEX 3
 #define OGLES_GPGPU_QUAD_TEXCOORDS_PER_VERTEX 2
@@ -226,8 +228,8 @@ protected:
     static const GLfloat quadTexCoordsDiagonalMirrored[]; // diagonal mirrored quad texture coordinates
     static const GLfloat quadVertices[]; // default quad vertices
 
-    FBO* fbo; // strong ref.!
-    Shader* shader; // strong ref.!
+    std::unique_ptr<FBO> fbo; // strong ref.!
+    std::unique_ptr<Shader> shader; // strong ref.!
 
     unsigned int orderNum; // position of this processor in the pipeline
 

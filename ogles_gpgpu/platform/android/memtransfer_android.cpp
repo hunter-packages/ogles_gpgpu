@@ -17,7 +17,15 @@ static int get_android_api() {
         int length = __system_property_get("ro.build.version.sdk", value);
         api = atoi(value);
 #else
-        api = popen("getprop ro.build.version.sdk");
+        FILE *fd = popen("getprop ro.build.version.sdk", "r");
+        if(fd) {
+            auto status = fscanf(fd, "%d", &api);
+            if(status) {
+                OG_LOGERR("get_android_api", "Could not read FD from: getprop ro.build.version.sdk");
+                return -1;
+            }
+            pclose(fd);
+        }
 #endif
     }
 
@@ -29,8 +37,10 @@ extern "C" int fake_dlclose(void* handle);
 extern "C" void* fake_dlsym(void* handle, const char* symbol);
 
 void* try_dlopen(const char* lib, int flags) {
+    // Here we will try fake_dlopen() even if get_android_api() is indeterminate (-1)
+    void* dlEGLhndl = NULL;
     if (get_android_api() < 24) {
-        void* dlEGLhndl = fake_dlopen(lib, flags);
+        dlEGLhndl = fake_dlopen(lib, flags);
     } else {
 #ifdef __arm__
         std::string path = "/system/lib/";
@@ -38,8 +48,9 @@ void* try_dlopen(const char* lib, int flags) {
         std::string path = "/system/lib64/";
 #endif
         path += lib;
-        void* dlEGLhndl = fake_dlopen(path.c_str(), flags);
+        dlEGLhndl = fake_dlopen(path.c_str(), flags);
     }
+    return dlEGLhndl;
 }
 
 void* try_dlsym(void* handle, const char* symbol) {
