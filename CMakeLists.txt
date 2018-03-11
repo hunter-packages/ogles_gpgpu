@@ -14,11 +14,11 @@ HunterGate(
   LOCAL    
 )
 
-project(ogles_gpgpu VERSION 0.2.8)
+project(ogles_gpgpu VERSION 0.2.9)
 
-# hunter_add_package(check_ci_tag)
-# find_package(check_ci_tag CONFIG REQUIRED)
-# check_ci_tag()
+hunter_add_package(check_ci_tag)
+find_package(check_ci_tag CONFIG REQUIRED)
+check_ci_tag()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
