@@ -339,7 +339,7 @@ TEST(OGLESGPGPUTest, Rgb2LuvProc) {
             cv::Vec3b rgb = torgb(cv::Vec3b(in[0], in[1], in[2]));
             cv::Vec3b luv = cvtColorRgb2Luv(cv::Vec3f(rgb) * (1.0/255.0)) * 255.0;
 
-            ASSERT_LE(max_element(cv::absdiff(cv::Vec3b(out[0],out[1],out[2]), luv)), 1);
+            ASSERT_LE(max_element(cv::absdiff(cv::Vec3b(out[0],out[1],out[2]), luv)), 2);
         }
     }
 }
