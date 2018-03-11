@@ -56,7 +56,6 @@ void VideoSource::configurePipeline(const Size2d& size, GLenum inputPixFormat) {
         yuv2RgbProc->createFBOTex(false); // TODO: mipmapping?
     }
 
-    assert(pipeline);
     if (pipeline != nullptr) {
         pipeline->prepare(size.width, size.height, inputPixFormat);
     }

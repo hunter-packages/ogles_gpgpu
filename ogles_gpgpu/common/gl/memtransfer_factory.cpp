@@ -24,21 +24,21 @@ using namespace ogles_gpgpu;
 
 bool MemTransferFactory::usePlatformOptimizations = false;
 
-MemTransfer* MemTransferFactory::createInstance() {
-    MemTransfer* instance = NULL;
+std::unique_ptr<MemTransfer> MemTransferFactory::createInstance() {
+    std::unique_ptr<MemTransfer> instance;
 
     if (usePlatformOptimizations) { // create specialized instance
 #if defined(OGLES_GPGPU_IOS) && !defined(OGLES_GPGPU_OPENGL_ES3)
-        instance = (MemTransfer*)new MemTransferIOS();
+        instance = std::unique_ptr<MemTransfer>(new MemTransferIOS);
 #elif defined(OGLES_GPGPU_ANDROID) && !defined(OGLES_GPGPU_OPENGL_ES3)
-        instance = (MemTransfer*)new MemTransferAndroid();
+        instance = std::unique_ptr<MemTransfer>(new MemTransferAndroid);
 #else
-        instance = (MemTransfer*)new MemTransfer();
+        instance = std::unique_ptr<MemTransfer>(new MemTransfer);
 #endif
     }
 
     if (!instance) { // create default instance
-        instance = new MemTransfer();
+        instance = std::unique_ptr<MemTransfer>(new MemTransfer);
     }
 
     return instance;
