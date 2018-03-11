@@ -22,7 +22,7 @@ endif()
 
 set(
     HUNTER_PASSWORDS_PATH
-    "${CMAKE_CURRENT_LIST_DIR}/cmake/Hunter/passwords.cmake"
+    "${CMAKE_CURRENT_LIST_DIR}/Hunter/passwords.cmake"
     CACHE
     FILEPATH
     "Hunter passwords"
