@@ -21,7 +21,10 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
+#include <unistd.h> // for close
 #include <sys/mman.h>
 #include <elf.h>
 #include <android/log.h>

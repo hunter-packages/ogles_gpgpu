@@ -3,16 +3,22 @@
 
 cmake_minimum_required(VERSION 3.0)
 
+include("cmake/hunter_cache_update.cmake")
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
 
 include("cmake/HunterGate.cmake")
 HunterGate(
-  URL "https://github.com/ruslo/hunter/archive/v0.19.234.tar.gz"
-  SHA1 "3deec1041bd01c91e78269522b901fbab3a765e5"
+  URL "https://github.com/ruslo/hunter/archive/v0.20.14.tar.gz"
+  SHA1 "18cdbf5c47abdda437c73bf5437b7c3c65afe47c"
   LOCAL    
 )
 
 project(ogles_gpgpu VERSION 0.2.8)
+
+# hunter_add_package(check_ci_tag)
+# find_package(check_ci_tag CONFIG REQUIRED)
+# check_ci_tag()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
