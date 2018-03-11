@@ -157,6 +157,11 @@ bool almost_equal(const cv::Mat_<cv::Vec<T,N>> &a, const cv::Mat_<cv::Vec<T,N>> 
 static cv::Vec3f cvtColorRgb2Luv(const cv::Vec3f& rgb);
 
 int gauze_main(int argc, char** argv) {
+
+    // You can enable platform specific optimizations for faster transfers,
+    // althought this is insignificant for unit testing.
+    //ogles_gpgpu::Core::tryEnablePlatformOptimizations();
+    
     ::testing::InitGoogleTest(&argc, argv);
     auto code = RUN_ALL_TESTS();
     return code;
