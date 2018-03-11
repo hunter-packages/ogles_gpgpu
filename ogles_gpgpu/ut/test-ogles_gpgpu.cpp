@@ -157,6 +157,11 @@ bool almost_equal(const cv::Mat_<cv::Vec<T,N>> &a, const cv::Mat_<cv::Vec<T,N>> 
 static cv::Vec3f cvtColorRgb2Luv(const cv::Vec3f& rgb);
 
 int gauze_main(int argc, char** argv) {
+
+    // You can enable platform specific optimizations for faster transfers,
+    // althought this is insignificant for unit testing.
+    //ogles_gpgpu::Core::tryEnablePlatformOptimizations();
+    
     ::testing::InitGoogleTest(&argc, argv);
     auto code = RUN_ALL_TESTS();
     return code;
@@ -339,7 +344,7 @@ TEST(OGLESGPGPUTest, Rgb2LuvProc) {
             cv::Vec3b rgb = torgb(cv::Vec3b(in[0], in[1], in[2]));
             cv::Vec3b luv = cvtColorRgb2Luv(cv::Vec3f(rgb) * (1.0/255.0)) * 255.0;
 
-            ASSERT_LE(max_element(cv::absdiff(cv::Vec3b(out[0],out[1],out[2]), luv)), 1);
+            ASSERT_LE(max_element(cv::absdiff(cv::Vec3b(out[0],out[1],out[2]), luv)), 2);
         }
     }
 }

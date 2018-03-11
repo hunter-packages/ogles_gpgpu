@@ -68,29 +68,22 @@ public:
     /**
      * Not implemented - no output texture needed because Disp renders on screen.
      */
-    virtual void createFBOTex(bool genMipmap) {
-        assert(false);
-    }
+    virtual void createFBOTex(bool genMipmap) {}
 
     /**
      * Not implemented - no output is returned because Disp renders on screen.
      */
-    virtual void getResultData(unsigned char* data = nullptr, int index = 0) const {
-        assert(false);
-    }
+    virtual void getResultData(unsigned char* data = nullptr, int index = 0) const {} 
 
     /**
      * Not implemented - no output is returned because Disp renders on screen.
      */
-    virtual void getResultData(const FrameDelegate& frameDelegate = {}, int index = 0) const {
-        assert(false);
-    }
+    virtual void getResultData(const FrameDelegate& frameDelegate = {}, int index = 0) const {}
 
     /**
      * Not implemented - no MemTransferObj for output is set because Disp renders on screen.
      */
     virtual MemTransfer* getMemTransferObj() const {
-        assert(false);
         return NULL;
     }
 

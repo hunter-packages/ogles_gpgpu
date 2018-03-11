@@ -232,7 +232,7 @@ protected:
 #endif // OGLES_GPGPU_USE_CLASS_READ
 
 #if OGLES_GPGPU_USE_CLASS_WRITE
-    OPBO* pboWrite = nullptr;
+    std::unique_ptr<OPBO> pboWrite;
 #else // OGLES_GPGPU_USE_CLASS_WRITE
     GLuint pboWrite;
 #endif // OGLES_GPGPU_USE_CLASS_WRITE
