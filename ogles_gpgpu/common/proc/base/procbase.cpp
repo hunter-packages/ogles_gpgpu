@@ -73,8 +73,6 @@ const GLfloat ProcBase::quadVertices[] = {
 ProcBase::ProcBase() {
     texId = 0;
     texUnit = 1;
-    shader = NULL;
-    fbo = NULL;
     willDownscale = false;
 
     procParamOutW = procParamOutH = 0;
@@ -84,20 +82,17 @@ ProcBase::ProcBase() {
 }
 
 ProcBase::~ProcBase() {
-    cleanup();
+    outFrameW = outFrameH = 0;    
 }
 
 void ProcBase::cleanup() {
     if (fbo) {
-        delete fbo;
-        fbo = NULL;
-
+        fbo.reset();
         outFrameW = outFrameH = 0;
     }
 
     if (shader) {
-        delete shader;
-        shader = NULL;
+        shader.reset();
     }
 }
 
@@ -225,7 +220,7 @@ void ProcBase::setInOutFrameSizes(int inW, int inH, int outW, int outH, float sc
 void ProcBase::createFBO() {
     assert(fbo == NULL);
 
-    fbo = new FBO();
+    fbo = std::unique_ptr<FBO>(new FBO);
     fbo->setGLTexUnit(1);
     fbo->getMemTransfer()->resizePBO(outputPboCount);
 }
@@ -233,7 +228,7 @@ void ProcBase::createFBO() {
 void ProcBase::createShader(const char* vShSrc, const char* fShSrc, GLenum target, const Shader::Attributes& attributes) {
     if (shader) { // already compiled,
         if (texTarget != target)
-            delete shader; // change in texture target -> recreate!
+            shader.reset(); // change in texture target -> recreate!
         else
             return; // no change -> do nothing
     }
@@ -257,7 +252,7 @@ void ProcBase::createShader(const char* vShSrc, const char* fShSrc, GLenum targe
     }
 #endif
 
-    shader = new Shader();
+    shader = std::unique_ptr<Shader>(new Shader);
     bool compiled = shader->buildFromSrc(vShSrc, fSrcStr.c_str(), attributes);
 
     assert(compiled);

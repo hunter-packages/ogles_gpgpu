@@ -17,6 +17,8 @@
 #include "../core.h"
 #include "memtransfer_factory.h"
 
+#include <memory>
+
 namespace ogles_gpgpu {
 
 class Core;
@@ -134,7 +136,7 @@ public:
      * Get MemTransfer object associated with this FBO.
      */
     MemTransfer* getMemTransfer() const {
-        return memTransfer;
+        return memTransfer.get();
     }
 
 protected:
@@ -145,7 +147,7 @@ protected:
 
     Core* core; // Core singleton
 
-    MemTransfer* memTransfer = nullptr; // MemTransfer object associated with this FBO
+    std::unique_ptr<MemTransfer> memTransfer; // MemTransfer object associated with this FBO
 
     GLuint id; // OpenGL FBO id
     GLuint glTexUnit; // GL texture unit (to be used in glActiveTexture()) for output texture

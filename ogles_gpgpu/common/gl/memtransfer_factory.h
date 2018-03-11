@@ -18,6 +18,8 @@
 #include "../common_includes.h"
 #include "memtransfer.h"
 
+#include <memory>
+
 namespace ogles_gpgpu {
 
 /**
@@ -29,7 +31,7 @@ public:
     /**
      * Create a new MemTransfer instance.
      */
-    static MemTransfer* createInstance();
+    static std::unique_ptr<MemTransfer> createInstance();
 
     /**
      * Try to enable platform optimizations. Returns true on success, else false.
