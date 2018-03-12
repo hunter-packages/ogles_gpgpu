@@ -129,16 +129,6 @@ script:
     --jobs 2
     ${INSTALL} ${TEST}
 
-  # Upload to server
-  - git clone https://github.com/ruslo/hunter
-  - >
-    ./hunter/maintenance/upload-cache-to-github.py
-    --username ingenue
-    --repo-owner ingenue
-    --repo hunter-cache
-    --cache-dir ${HOME}/.hunter/_Base/Cache
-    --temp-dir ${HOME}/__TEMP_HUNTER
-
 branches:
   except:
     - /^pr\..*/

@@ -58,10 +58,6 @@ install:
 build_script:
   - cmd: python %POLLY_SOURCE_DIR%\bin\polly.py --toolchain "%TOOLCHAIN%" --config "%CONFIG%" --verbose --fwd OGLES_GPGPU_BUILD_TESTS=ON
 
-  # Upload to server
-  - cmd: git clone https://github.com/ruslo/hunter
-  - cmd: python %cd%\hunter\maintenance\upload-cache-to-github.py --username ingenue --repo-owner ingenue --repo hunter-cache --cache-dir C:/.hunter/_Base/Cache --temp-dir C:/.hunter/__TEMP_HUNTER
-
 branches:
   except:
     - /^pr\..*/

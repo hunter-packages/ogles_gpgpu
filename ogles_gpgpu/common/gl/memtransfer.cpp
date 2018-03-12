@@ -102,7 +102,7 @@ GLuint MemTransfer::prepareInput(int inTexW, int inTexH, GLenum inputPxFormat, v
 
 #if defined(OGLES_GPGPU_OPENGL_ES3)
     // ::::::: allocate ::::::::::
-    pboWrite = new OPBO(inputW, inputH);
+    pboWrite = std::unique_ptr<OPBO>(new OPBO(inputW, inputH));
 #endif // defined(OGLES_GPGPU_OPENGL_ES3)
 
     // done
@@ -171,8 +171,7 @@ void MemTransfer::releaseInput() {
 
 #if defined(OGLES_GPGPU_OPENGL_ES3)
     if (pboWrite) {
-        delete pboWrite;
-        pboWrite = nullptr;
+        pboWrite.reset();
     }
 #endif // defined(OGLES_GPGPU_OPENGL_ES3)
 }
