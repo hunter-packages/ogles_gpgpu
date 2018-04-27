@@ -99,7 +99,6 @@ void VideoSource::operator()(const Size2d& size, void* pixelBuffer, bool useRawP
 
             yuv2RgbProc->setTextures(manager->getLuminanceTexId(), manager->getChrominanceTexId());
             yuv2RgbProc->render();
-            //glFinish();
 
             gpgpuInputHandler->prepareInput(frameSize.width, frameSize.height, GL_NONE, nullptr);
             inputTexture = yuv2RgbProc->getOutputTexId(); // override input parameter

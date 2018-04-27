@@ -36,7 +36,7 @@
 #  else
 #    if defined(OGLES_GPGPU_OPENGL_ES3)
 #      include <OpenGL/gl3.h>
-#      include <OpenGL/gl2ext.h>
+#      include <OpenGL/gl3ext.h>
 #    else
 #      include <OpenGL/gl.h>
 #      include <OpenGL/glext.h>
