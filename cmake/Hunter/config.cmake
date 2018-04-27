@@ -1,12 +1,13 @@
+option(OGLES_GPGPU_OPENCV_HIGHGUI "Toggle opencv highgui" OFF)
 set(OPENCV_CMAKE_ARGS
 
   BUILD_opencv_core=ON
   BUILD_opencv_imgproc=ON
   
-  BUILD_opencv_imgcodecs=OFF
-  BUILD_opencv_video=OFF
-  BUILD_opencv_videoio=OFF
-  BUILD_opencv_highgui=OFF  
+  BUILD_opencv_imgcodecs=${OGLES_GPGPU_OPENCV_HIGHGUI}
+  BUILD_opencv_video=${OGLES_GPGPU_OPENCV_HIGHGUI}
+  BUILD_opencv_videoio=${OGLES_GPGPU_OPENCV_HIGHGUI}
+  BUILD_opencv_highgui=${OGLES_GPGPU_OPENCV_HIGHGUI}
   
   BUILD_opencv_calib3d=OFF
   BUILD_opencv_contrib=OFF
