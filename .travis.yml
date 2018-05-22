@@ -90,7 +90,6 @@ install:
   - export HOMEBREW_NO_AUTO_UPDATE=1
 
   # Install Python 3
-  - if [[ "`uname`" == "Darwin" ]]; then travis_retry brew upgrade python; fi
   - if [[ "`uname`" == "Darwin" ]]; then travis_retry brew install python3; fi
 
   # Install Python package 'requests'
