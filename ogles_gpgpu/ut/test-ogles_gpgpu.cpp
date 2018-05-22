@@ -241,7 +241,11 @@ static cv::Mat getTestImage(int width, int height, int stripe, bool alpha, GLenu
 
 static int gWidth = 640;
 static int gHeight = 480;
+#if defined(OGLES_GPGPU_OPENGL_ES3)
 static aglet::GLContext::GLVersion gVersion = aglet::GLContext::kGLES30;
+#else
+static aglet::GLContext::GLVersion gVersion = aglet::GLContext::kGLES20;
+#endif
 
 #if defined(OGLES_GPGPU_OPENGL_ES3)
 TEST(OGLESGPGPUTest, PingPong) {
