@@ -63,11 +63,11 @@ matrix:
     # https://github.com/ingenue/hunter/blob/pkg.opencv/.travis.yml
 
     - os: osx
-      osx_image: xcode8.3      
+      osx_image: xcode8.3
       env: CONFIG=Release TOOLCHAIN=ios-nocodesign-10-3-arm64-dep-9-0-device-libcxx-hid-sections INSTALL=--install MESA=OFF
 
     - os: osx
-      osx_image: xcode8.3      
+      osx_image: xcode8.3
       env: CONFIG=Release TOOLCHAIN=osx-10-12 INSTALL=--install MESA=OFF
 
     - os: osx
