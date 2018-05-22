@@ -1,7 +1,7 @@
 hunter_upload_password(
     # REPO_OWNER + REPO = https://github.com/ingenue/hunter-cache
     REPO_OWNER "ingenue"
-    REPO "hunter-cache"
+    REPO "hunter-cache-2"
 
     # USERNAME = https://github.com/ingenue
     USERNAME "ingenue"
