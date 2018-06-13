@@ -81,6 +81,7 @@ matrix:
         MESA=OFF
 
     - os: osx
+      osx_image: xcode9.3 # https://travis-ci.org/hunter-packages/ogles_gpgpu/jobs/391926546#L54
       env: >        
         TOOLCHAIN=android-ndk-r17-api-19-armeabi-v7a-neon-clang-libcxx
         CONFIG=Release
