@@ -24,6 +24,8 @@ addons:
     packages:
       # For ogles_gpgpu (GL library)
       - libgl1-mesa-dev
+      - libegl1-mesa-dev
+      - libosmesa6-dev      
 
       # GCC 5
       - g++-5
