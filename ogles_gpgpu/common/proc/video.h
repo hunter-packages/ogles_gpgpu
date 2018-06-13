@@ -62,6 +62,8 @@ public:
 
     void init(void* glContext);
 
+    void configure(const Size2d& size, GLenum inputPixFormat = DFLT_PIX_FORMAT);
+
     void operator()(const FrameInput& frame);
 
     void operator()(const Size2d& size, void* pixelBuffer, bool useRawPixels, GLuint inputTexture = 0, GLenum inputPixFormat = DFLT_PIX_FORMAT);
