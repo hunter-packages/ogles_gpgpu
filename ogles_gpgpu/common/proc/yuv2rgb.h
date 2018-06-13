@@ -16,7 +16,7 @@
 
 #include "base/filterprocbase.h"
 
-namespace ogles_gpgpu {
+BEGIN_OGLES_GPGPU
 
 /**
  * GPGPU yuv2rgb processor will perform yuv to rgb colorspace transformation
@@ -102,6 +102,7 @@ private:
     YUVKind yuvKind = k601VideoRange;
     ChannelKind channelKind = kLA;
 };
-}
+
+END_OGLES_GPGPU
 
 #endif
