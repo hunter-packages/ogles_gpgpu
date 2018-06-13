@@ -20,15 +20,15 @@ dist:
 addons:
   apt:
     sources:
-      - ubuntu-toolchain-r-test
+      - llvm-toolchain-trusty-5.0
     packages:
       # For ogles_gpgpu (GL library)
       - libgl1-mesa-dev
       - libegl1-mesa-dev
       - libosmesa6-dev      
 
-      # GCC 7
-      - g++-7
+      # clang 5
+      - clang-5.0
 
       # pip3
       - python3-pip
@@ -43,20 +43,20 @@ matrix:
 
     - os: linux
       env: >
-        TOOLCHAIN=gcc-7
+        TOOLCHAIN=clang-5
         CONFIG=Release
         INSTALL=--strip
         MESA=ON
 
+    # FIXME: OSError: [Errno 28] No space left on device
+    # - os: linux
+    #   env: >
+    #     TOOLCHAIN=android-ndk-r17-api-24-arm64-v8a-clang-libcxx14
+    #     CONFIG=MinSizeRel
+    #     INSTALL=--strip
+    #     MESA=OFF
+    #     TEST=--test
 
-    - os: linux
-      env: >
-        TOOLCHAIN=android-ndk-r17-api-24-arm64-v8a-clang-libcxx14
-        CONFIG=MinSizeRel
-        INSTALL=--strip
-        MESA=OFF
-        TEST=--test
-        
     # }
 
     # OSX {
@@ -79,6 +79,13 @@ matrix:
         CONFIG=Release
         INSTALL=--install
         MESA=OFF
+
+    - os: osx
+      env: >        
+        TOOLCHAIN=android-ndk-r17-api-19-armeabi-v7a-neon-clang-libcxx
+        CONFIG=Release
+        INSTALL=--install
+        MESA=OFF        
 
     # }
 
