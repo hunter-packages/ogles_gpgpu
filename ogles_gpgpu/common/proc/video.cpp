@@ -70,6 +70,15 @@ void VideoSource::operator()(const FrameInput& frame) {
     return (*this)(frame.size, frame.pixelBuffer, frame.useRawPixels, frame.inputTexture, frame.textureFormat);
 }
 
+void VideoSource::configure(const Size2d& size, GLenum inputPixFormat)
+{
+    if (firstFrame || size != frameSize)
+    {
+        configurePipeline(size, inputPixFormat);
+        firstFrame = false;
+    }
+}
+
 void VideoSource::operator()(const Size2d& size, void* pixelBuffer, bool useRawPixels, GLuint inputTexture, GLenum inputPixFormat) {
     preConfig();
 
@@ -77,6 +86,8 @@ void VideoSource::operator()(const Size2d& size, void* pixelBuffer, bool useRawP
         m_timer("begin");
 
     assert(pipeline);
+
+    configure(size, inputPixFormat);
 
     if (firstFrame || size != frameSize) {
         configurePipeline(size, inputPixFormat);
