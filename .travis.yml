@@ -1,8 +1,5 @@
 # OSX/Linux (https://github.com/travis-ci-tester/toolchain-table)
 
-# Original: https://github.com/forexample/hunter-simple/blob/master/.travis.yml
-
-# Workaround for https://github.com/travis-ci/travis-ci/issues/8363
 language:
   - minimal
 
@@ -16,33 +13,25 @@ dist:
 
 # Install packages differs for container-based infrastructure
 # * https://docs.travis-ci.com/user/migrating-from-legacy/#How-do-I-install-APT-sources-and-packages%3F
+# List of available packages:
+# * https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-trusty
+# List of available sources:
+# * https://github.com/travis-ci/apt-source-whitelist/blob/master/ubuntu.json
 addons:
   apt:
     sources:
-      - ubuntu-toolchain-r-test
+      - llvm-toolchain-trusty-5.0
     packages:
-      # For off screen rendering
-      - libegl1-mesa-dev
-      - libosmesa6-dev
-
-      # glapi
+      # For ogles_gpgpu (GL library)
       - libgl1-mesa-dev
+      - libegl1-mesa-dev
+      - libosmesa6-dev      
 
-      # xorg-macros: https://github.com/BlueDragonX/xf86-input-mtrack/issues/27#issuecomment-186871891
-      - xutils-dev
-      - xserver-xorg-dev-lts-trusty
+      # clang 5
+      - clang-5.0
 
-      # Packages for Android development: http://superuser.com/a/360398/252568
-      - libncurses5:i386
-      - libstdc++6:i386
-      - zlib1g:i386
-
+      # pip3
       - python3-pip
-
-      # Default GCC 4.8 is buggy:
-      # * https://github.com/elucideye/drishti/issues/273#issuecomment-301297286
-      #- g++-5
-      #- gcc-5
 
 env:
   global:
@@ -53,7 +42,20 @@ matrix:
     # Linux {
 
     - os: linux
-      env: CONFIG=Release TOOLCHAIN=gcc INSTALL=--strip MESA=ON TEST=--test
+      env: >
+        TOOLCHAIN=clang-5
+        CONFIG=Release
+        INSTALL=--strip
+        MESA=ON
+
+    # FIXME: OSError: [Errno 28] No space left on device
+    # - os: linux
+    #   env: >
+    #     TOOLCHAIN=android-ndk-r17-api-24-arm64-v8a-clang-libcxx14
+    #     CONFIG=MinSizeRel
+    #     INSTALL=--strip
+    #     MESA=OFF
+    #     TEST=--test
 
     # }
 
@@ -63,16 +65,28 @@ matrix:
     # https://github.com/ingenue/hunter/blob/pkg.opencv/.travis.yml
 
     - os: osx
-      osx_image: xcode8.3
-      env: CONFIG=Release TOOLCHAIN=ios-nocodesign-10-3-arm64-dep-9-0-device-libcxx-hid-sections INSTALL=--install MESA=OFF
+      osx_image: xcode9.3
+      env: >
+        TOOLCHAIN=ios-nocodesign-11-3-dep-9-3-arm64
+        CONFIG=Release
+        INSTALL=--install
+        MESA=OFF
 
     - os: osx
-      osx_image: xcode8.3
-      env: CONFIG=Release TOOLCHAIN=osx-10-12 INSTALL=--install MESA=OFF
+      osx_image: xcode9.3
+      env: >
+        TOOLCHAIN=osx-10-13
+        CONFIG=Release
+        INSTALL=--install
+        MESA=OFF
 
     - os: osx
-      osx_image: xcode8.3
-      env: CONFIG=Release TOOLCHAIN=android-ndk-r10e-api-19-armeabi-v7a-neon INSTALL=--strip MESA=OFF TEST=--test
+      osx_image: xcode9.3 # https://travis-ci.org/hunter-packages/ogles_gpgpu/jobs/391926546#L54
+      env: >        
+        TOOLCHAIN=android-ndk-r17-api-19-armeabi-v7a-neon-clang-libcxx
+        CONFIG=Release
+        INSTALL=--install
+        MESA=OFF        
 
     # }
 
@@ -82,15 +96,21 @@ before_install:
   - git submodule update --init --recursive --quiet
 
 install:
+
   # Info about OS
   - uname -a
+
+  # Info about available disk space
+  - df -h $HOME
 
   # Disable autoupdate
   # * https://github.com/Homebrew/brew/blob/7d31a70373edae4d8e78d91a4cbc05324bebc3ba/Library/Homebrew/manpages/brew.1.md.erb#L202
   - export HOMEBREW_NO_AUTO_UPDATE=1
 
   # Install Python 3
-  - if [[ "`uname`" == "Darwin" ]]; then travis_retry brew install python3; fi
+  # >> Error: python 2.7.14 is already installed \n To upgrade to 3.6.4_3, run `brew upgrade python`
+  #- if [[ "`uname`" == "Darwin" ]]; then travis_retry brew install python3; fi  
+  - if [[ "`uname`" == "Darwin" ]]; then travis_retry brew upgrade python; fi
 
   # Install Python package 'requests'
   # 'easy_install3' is not installed by 'brew install python3' on OS X 10.9 Maverick
@@ -113,20 +133,23 @@ install:
 
   # Installed if toolchain is Android (otherwise directory doesn't exist)
   - export ANDROID_NDK_r10e="`pwd`/_ci/android-ndk-r10e"
+  - export ANDROID_NDK_r11c="`pwd`/_ci/android-ndk-r11c"
+  - export ANDROID_NDK_r15c="`pwd`/_ci/android-ndk-r15c"
+  - export ANDROID_NDK_r16b="`pwd`/_ci/android-ndk-r16b"
+  - export ANDROID_NDK_r17="`pwd`/_ci/android-ndk-r17"
 
 script:
 
   - >
     polly.py
     --toolchain ${TOOLCHAIN}
-    --config ${CONFIG}
+    --config-all ${CONFIG}
     --verbose
     --ios-multiarch --ios-combined
     --fwd HUNTER_CONFIGURATION_TYPES=${CONFIG}
     OGLES_GPGPU_BUILD_TESTS=ON
     OGLES_GPGPU_USE_OSMESA=${MESA}
     GAUZE_ANDROID_USE_EMULATOR=YES
-    HUNTER_CONFIGURATION_TYPES=${CONFIG}
     HUNTER_SUPPRESS_LIST_OF_FILES=ON
     --jobs 2
     ${INSTALL} ${TEST}

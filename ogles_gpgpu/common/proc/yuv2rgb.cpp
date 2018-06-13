@@ -10,8 +10,7 @@
 #include "yuv2rgb.h"
 #include "../common_includes.h"
 
-using namespace std;
-using namespace ogles_gpgpu;
+BEGIN_OGLES_GPGPU
 
 // Color Conversion Constants (YUV to RGB) including adjustment from 16-235/16-240 (video range)
 
@@ -360,3 +359,5 @@ int Yuv2RgbProc::render(int position) {
 
     return 0;
 }
+
+END_OGLES_GPGPU
