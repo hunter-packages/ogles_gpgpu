@@ -14,7 +14,7 @@ HunterGate(
   LOCAL
 )
 
-project(ogles_gpgpu VERSION 0.3.0)
+project(ogles_gpgpu VERSION 0.3.1)
 
 hunter_add_package(check_ci_tag)
 find_package(check_ci_tag CONFIG REQUIRED)
