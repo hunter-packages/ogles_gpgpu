@@ -115,7 +115,6 @@ void VideoSource::operator()(const Size2d& size, void* pixelBuffer, bool useRawP
             inputTexture = yuv2RgbProc->getOutputTexId(); // override input parameter
         } else {
             gpgpuInputHandler->prepareInput(frameSize.width, frameSize.height, inputPixFormat, pixelBuffer);
-            setInputData(reinterpret_cast<const unsigned char*>(pixelBuffer));
             inputTexture = gpgpuInputHandler->getInputTexId(); // override input parameter
         }
     }
