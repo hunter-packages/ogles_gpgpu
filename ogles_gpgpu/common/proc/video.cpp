@@ -8,6 +8,7 @@
 
 #include "video.h"
 #include "yuv2rgb.h"
+#include <ogles_gpgpu/common/gl/memtransfer_optimized.h>
 
 using namespace ogles_gpgpu;
 
@@ -115,6 +116,12 @@ void VideoSource::operator()(const Size2d& size, void* pixelBuffer, bool useRawP
             inputTexture = yuv2RgbProc->getOutputTexId(); // override input parameter
         } else {
             gpgpuInputHandler->prepareInput(frameSize.width, frameSize.height, inputPixFormat, pixelBuffer);
+
+            // For generic platforms we must also load pixel buffer to the texture:
+            if (dynamic_cast<ogles_gpgpu::MemTransferOptimized*>(gpgpuInputHandler) == nullptr) {
+                setInputData(reinterpret_cast<const unsigned char*>(pixelBuffer));
+            }
+            
             inputTexture = gpgpuInputHandler->getInputTexId(); // override input parameter
         }
     }
