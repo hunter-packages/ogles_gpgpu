@@ -28,9 +28,30 @@ void main()
 );
 // clang-format on
 
+Disp::Disp() = default;
+
+Disp::Disp(const Callback &renderbufferStorage)
+    : renderbufferStorage(renderbufferStorage)
+{
+    
+}
+
+Disp::~Disp()
+{
+    if (renderbufferStorage)
+    {
+        glDeleteRenderbuffers(1, &renderbuffer);
+    }
+}
+
 int Disp::init(int inW, int inH, unsigned int order, bool prepareForExternalInput) {
     OG_LOGINF(getProcName(), "initialize");
 
+    if(renderbufferStorage)
+    {
+        createFBO();
+    }
+    
     // ProcBase init - set defaults
     baseInit(inW, inH, order, prepareForExternalInput, procParamOutW, procParamOutH, procParamOutScale);
 
@@ -50,12 +71,48 @@ int Disp::render(int position) {
     filterRenderSetCoords();
     Tools::checkGLErr(getProcName(), "render set coords");
 
-    //glBindBuffer(GL_FRAMEBUFFER, 0);
     filterRenderDraw();
     Tools::checkGLErr(getProcName(), "render draw");
+    
+    if(renderbufferStorage)
+    {
+        glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+        Tools::checkGLErr(getProcName(), "glBindRenderbuffer");
+    }
 
     filterRenderCleanup();
     Tools::checkGLErr(getProcName(), "render cleanup");
 
     return 0;
+}
+
+void Disp::createFBO()
+{
+    FilterProcBase::createFBO();
+    
+    if (renderbufferStorage) {
+        
+        fbo->bind();
+        Tools::checkGLErr(getProcName(), "glBindFramebuffer");
+        
+        // Create a Renderbuffer
+        glGenRenderbuffers(1, &renderbuffer);
+        Tools::checkGLErr(getProcName(), "glGenRenderbuffers");
+    
+        glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+        Tools::checkGLErr(getProcName(), "glBindRenderbuffer");
+    
+        renderbufferStorage();
+        Tools::checkGLErr(getProcName(), "renderbufferStorage");
+        
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderbuffer);
+        Tools::checkGLErr(getProcName(), "glFramebufferRenderbuffer");
+    
+        auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (fboStatus != GL_FRAMEBUFFER_COMPLETE) {
+            std::stringstream ss;
+            ss << "Framebuffer incomplete :" << int(fboStatus);
+            throw std::runtime_error(ss.str());
+        }
+    }
 }
