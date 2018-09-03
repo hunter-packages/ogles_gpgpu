@@ -25,6 +25,24 @@ namespace ogles_gpgpu {
  */
 class Disp : public FilterProcBase {
 public:
+    
+    using Callback = std::function<void()>;
+    
+    /**
+     * Default constructor
+     */
+    Disp();
+    
+    /**
+     * Constructor for renderbuffer based display
+     */
+    Disp(const Callback &renderbufferStorage);
+
+    /**
+     * Destructor
+     */
+    virtual ~Disp();
+    
     /**
      * Output resolution of display.
      *
@@ -87,6 +105,13 @@ public:
         return NULL;
     }
 
+    /**
+     * Create an FBO for this processor. This will contain the result after rendering in its attached texture.
+     *
+     * (optional) create renderbuffer if renderbufferStorage callback was specified in constructor.
+     */
+    virtual void createFBO();
+    
 private:
     float tx = 0.f;
     float ty = 0.f;
@@ -94,6 +119,9 @@ private:
     float resolutionY = 1.f;
 
     static const char* fshaderDispSrc; // fragment shader source
+    
+    GLuint renderbuffer; // (optional) renderbuffer based display
+    Callback renderbufferStorage;
 };
 }
 
