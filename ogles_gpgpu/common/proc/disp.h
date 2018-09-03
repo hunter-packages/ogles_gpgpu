@@ -17,6 +17,8 @@
 
 #include "base/filterprocbase.h"
 
+#include <functional>
+
 namespace ogles_gpgpu {
 
 /**
