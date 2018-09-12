@@ -10,6 +10,12 @@
 #include "yuv2rgb.h"
 #include <ogles_gpgpu/common/gl/memtransfer_optimized.h>
 
+#if defined(OGLES_GPGPU_OPENGL_ES3)
+#  define OGLES_GPGPU_BIPLANAR_CHANNEL_KIND Yuv2RgbProc::kRG
+#else
+#  define OGLES_GPGPU_BIPLANAR_CHANNEL_KIND Yuv2RgbProc::kLA
+#endif
+
 using namespace ogles_gpgpu;
 
 VideoSource::VideoSource(void* glContext) {
@@ -44,7 +50,7 @@ GLuint VideoSource::getInputTexId() {
 void VideoSource::configurePipeline(const Size2d& size, GLenum inputPixFormat) {
     if (inputPixFormat == 0) { // 0 == NV{12,21}
         if (!yuv2RgbProc) {
-            yuv2RgbProc = std::make_shared<ogles_gpgpu::Yuv2RgbProc>();
+            yuv2RgbProc = std::make_shared<ogles_gpgpu::Yuv2RgbProc>(Yuv2RgbProc::k601VideoRange, OGLES_GPGPU_BIPLANAR_CHANNEL_KIND);
             yuv2RgbProc->setExternalInputDataFormat(inputPixFormat);
             yuv2RgbProc->init(size.width, size.height, 0, true);
             frameSize = size;

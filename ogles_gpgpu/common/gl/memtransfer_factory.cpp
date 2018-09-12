@@ -11,10 +11,8 @@
 #include "../core.h"
 
 // clang-off
-#if defined(OGLES_GPGPU_IOS) && !defined(OGLES_GPGPU_OPENGL_ES3)
+#if defined(OGLES_GPGPU_IOS)
 #  include "../../platform/ios/memtransfer_ios.h"
-#elif defined(OGLES_GPGPU_ANDROID) && !defined(OGLES_GPGPU_OPENGL_ES3)
-#  include "../../platform/android/memtransfer_android.h"
 #else
 #  include "../../platform/opengl/memtransfer_generic.h"
 #endif
@@ -28,10 +26,8 @@ std::unique_ptr<MemTransfer> MemTransferFactory::createInstance() {
     std::unique_ptr<MemTransfer> instance;
 
     if (usePlatformOptimizations) { // create specialized instance
-#if defined(OGLES_GPGPU_IOS) && !defined(OGLES_GPGPU_OPENGL_ES3)
+#if defined(OGLES_GPGPU_IOS)
         instance = std::unique_ptr<MemTransfer>(new MemTransferIOS);
-#elif defined(OGLES_GPGPU_ANDROID) && !defined(OGLES_GPGPU_OPENGL_ES3)
-        instance = std::unique_ptr<MemTransfer>(new MemTransferAndroid);
 #else
         instance = std::unique_ptr<MemTransfer>(new MemTransfer);
 #endif
@@ -45,10 +41,8 @@ std::unique_ptr<MemTransfer> MemTransferFactory::createInstance() {
 }
 
 bool MemTransferFactory::tryEnablePlatformOptimizations() {
-#if defined(OGLES_GPGPU_IOS) && !defined(OGLES_GPGPU_OPENGL_ES3)
+#if defined(OGLES_GPGPU_IOS)
     usePlatformOptimizations = MemTransferIOS::initPlatformOptimizations();
-#elif defined(OGLES_GPGPU_ANDROID) && !defined(OGLES_GPGPU_OPENGL_ES3)
-    usePlatformOptimizations = MemTransferAndroid::initPlatformOptimizations();
 #else
     usePlatformOptimizations = false;
 #endif
