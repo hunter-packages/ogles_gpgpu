@@ -13,8 +13,6 @@
 
 #include "../../common/core.h"
 
-#include "../../common/proc/yuv2rgb.h"
-
 /**
  * Most code as from http://allmybrain.com/2011/12/08/rendering-to-a-texture-with-ios-5-texture-cache-api/
  */
@@ -280,10 +278,10 @@ GLuint MemTransferIOS::prepareInput(int inTexW, int inTexH, GLenum inputPxFormat
                 bufRef,
                 NULL,
                 GL_TEXTURE_2D,
-                GL_LUMINANCE,
+                OGLES_GPGPU_PLANAR_INTERNAL_FORMAT,
                 inputW,
                 inputH,
-                GL_LUMINANCE,
+                OGLES_GPGPU_PLANAR_FORMAT,
                 GL_UNSIGNED_BYTE,
                 0,
                 &luminanceTextureRef);
@@ -305,10 +303,10 @@ GLuint MemTransferIOS::prepareInput(int inTexW, int inTexH, GLenum inputPxFormat
                 bufRef,
                 NULL,
                 GL_TEXTURE_2D,
-                GL_LUMINANCE_ALPHA,
+                OGLES_GPGPU_BIPLANAR_INTERNAL_FORMAT,
                 inputW / 2,
                 inputH / 2,
-                GL_LUMINANCE_ALPHA,
+                OGLES_GPGPU_BIPLANAR_FORMAT,
                 GL_UNSIGNED_BYTE,
                 1,
                 &chrominanceTextureRef);
