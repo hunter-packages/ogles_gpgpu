@@ -77,8 +77,8 @@ std::string fragmentShaderForOptimizedBlur(int blurRadius, float sigma, bool doN
         GLfloat firstWeight = standardGaussianWeights[currentBlurCoordinateIndex * 2 + 1];
         GLfloat secondWeight = standardGaussianWeights[currentBlurCoordinateIndex * 2 + 2];
         GLfloat optimizedWeight = firstWeight + secondWeight;
-        int index1 = (unsigned long)((currentBlurCoordinateIndex * 2) + 1);
-        int index2 = (unsigned long)((currentBlurCoordinateIndex * 2) + 2);
+        int index1 = static_cast<int>((currentBlurCoordinateIndex * 2) + 1);
+        int index2 = static_cast<int>((currentBlurCoordinateIndex * 2) + 2);
         ss << "   sum += texture2D(inputImageTexture, blurCoordinates[" << index1 << "]) * " << optimizedWeight << ";\n";
         ss << "   sum += texture2D(inputImageTexture, blurCoordinates[" << index2 << "]) * " << optimizedWeight << ";\n";
     }
@@ -125,15 +125,15 @@ std::string vertexShaderForOptimizedBlur(int blurRadius, float sigma) {
     ss << "attribute vec4 inputTextureCoordinate;\n";
     ss << "uniform float texelWidthOffset;\n";
     ss << "uniform float texelHeightOffset;\n\n";
-    ss << "varying vec2 blurCoordinates[" << (unsigned long)(1 + (numberOfOptimizedOffsets * 2)) << "];\n\n";
+    ss << "varying vec2 blurCoordinates[" << static_cast<int>(1 + (numberOfOptimizedOffsets * 2)) << "];\n\n";
     ss << "void main()\n";
     ss << "{\n";
     ss << "   gl_Position = position;\n";
     ss << "   vec2 singleStepOffset = vec2(texelWidthOffset, texelHeightOffset);\n";
     ss << "   blurCoordinates[0] = inputTextureCoordinate.xy;\n";
     for (int currentOptimizedOffset = 0; currentOptimizedOffset < numberOfOptimizedOffsets; currentOptimizedOffset++) {
-        int x1 = (unsigned long)((currentOptimizedOffset * 2) + 1);
-        int x2 = (unsigned long)((currentOptimizedOffset * 2) + 2);
+        int x1 = static_cast<int>((currentOptimizedOffset * 2) + 1);
+        int x2 = static_cast<int>((currentOptimizedOffset * 2) + 2);
         const auto& optOffset = optimizedGaussianOffsets[currentOptimizedOffset];
 
         ss << "   blurCoordinates[" << x1 << "] = inputTextureCoordinate.xy + singleStepOffset * " << optOffset << ";\n";
