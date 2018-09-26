@@ -117,7 +117,7 @@ void MeshShaderProc::filterRenderSetCoords() {
 }
 
 void MeshShaderProc::filterRenderDraw() {
-    glDrawArrays(triangleKind, 0, vertices.size());
+    glDrawArrays(triangleKind, 0, static_cast<int>(vertices.size()));
 }
 
 void MeshShaderProc::setTriangleKind(GLenum kind) {

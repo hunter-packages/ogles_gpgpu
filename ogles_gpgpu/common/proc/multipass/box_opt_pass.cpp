@@ -32,8 +32,8 @@ static std::string vertexShaderForOptimizedBoxBlur(int blurRadius, float sigma) 
     ss << "   vec2 singleStepOffset = vec2(texelWidthOffset, texelHeightOffset);\n";
     ss << "   blurCoordinates[0] = inputTextureCoordinate.xy;\n";
     for (int currentOptimizedOffset = 0; currentOptimizedOffset < numberOfOptimizedOffsets; currentOptimizedOffset++) {
-        int x1 = (unsigned long)((currentOptimizedOffset * 2) + 1);
-        int x2 = (unsigned long)((currentOptimizedOffset * 2) + 2);
+        int x1 = static_cast<int>((currentOptimizedOffset * 2) + 1);
+        int x2 = static_cast<int>((currentOptimizedOffset * 2) + 2);
 
         GLfloat optimizedOffset = (GLfloat)(currentOptimizedOffset * 2) + 1.5;
 
@@ -70,8 +70,8 @@ static std::string fragmentShaderForOptimizedBoxBlur(int blurRadius, float sigma
     ss << " sum += texture2D(inputImageTexture, blurCoordinates[0]) * " << boxWeight << ";\n";
 
     for (int currentBlurCoordinateIndex = 0; currentBlurCoordinateIndex < numberOfOptimizedOffsets; currentBlurCoordinateIndex++) {
-        int index1 = (unsigned long)((currentBlurCoordinateIndex * 2) + 1);
-        int index2 = (unsigned long)((currentBlurCoordinateIndex * 2) + 2);
+        int index1 = static_cast<int>((currentBlurCoordinateIndex * 2) + 1);
+        int index2 = static_cast<int>((currentBlurCoordinateIndex * 2) + 2);
         ss << "   sum += texture2D(inputImageTexture, blurCoordinates[" << index1 << "]) * " << boxWeight2 << ";\n";
         ss << "   sum += texture2D(inputImageTexture, blurCoordinates[" << index2 << "]) * " << boxWeight2 << ";\n";
     }

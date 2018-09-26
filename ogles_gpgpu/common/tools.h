@@ -18,8 +18,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-using namespace std;
+#include <functional>
 
 namespace ogles_gpgpu {
 
@@ -47,13 +46,13 @@ public:
     /**
      * Split a string <s> by delimiter <delim>.
      */
-    static vector<string> split(const string& s, char delim = ' ');
+    static std::vector<std::string> split(const std::string& s, char delim = ' ');
 
     /**
      * Replace all strings <from> in <str> by <to>.
      * Code from http://stackoverflow.com/a/3418285.
      */
-    static void strReplaceAll(string& str, const string& from, const string& to);
+    static void strReplaceAll(std::string& str, const std::string& from, const std::string& to);
 
 #ifdef OGLES_GPGPU_BENCHMARK
     static void resetTimeMeasurement();
@@ -73,5 +72,18 @@ private:
 #endif
 };
 }
+
+// https://stackoverflow.com/a/28413370
+struct scope_guard
+{
+    template <typename Callable>
+    scope_guard(Callable&& f)
+        : m_f(std::forward<Callable>(f))
+    {
+    }
+    scope_guard(scope_guard&&) = default;
+    ~scope_guard() { m_f(); }
+    std::function<void()> m_f;
+};
 
 #endif
