@@ -14,7 +14,7 @@
 #include "../../common/core.h"
 
 /**
- * Most code as from http://allmybrain.com/2011/12/08/rendering-to-a-texture-with-ios-5-texture-cache-api/
+ * Most code is from http://allmybrain.com/2011/12/08/rendering-to-a-texture-with-ios-5-texture-cache-api/
  */
 
 using namespace std;
@@ -97,10 +97,14 @@ void MemTransferIOS::init() {
         0,
         &kCFTypeDictionaryKeyCallBacks,
         &kCFTypeDictionaryValueCallBacks);
+
+    scope_guard destroy = [&]() { CFRelease(empty); };
+    
     bufferAttr = CFDictionaryCreateMutable(kCFAllocatorDefault,
         1,
         &kCFTypeDictionaryKeyCallBacks,
         &kCFTypeDictionaryValueCallBacks);
+
     CFDictionarySetValue(bufferAttr,
         kCVPixelBufferIOSurfacePropertiesKey,
         empty);
