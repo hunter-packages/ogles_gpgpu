@@ -16,6 +16,8 @@
 
 // clang-format off
 
+#include "../platform/opengl/gl_definitions.h"
+
 //define something for Windows (64-bit)
 #if defined(_WIN32) || defined(_WIN64)
 #  include <algorithm> // min/max
@@ -64,19 +66,30 @@
 #    include <GLES2/gl2ext.h>
 #  endif
 #elif defined(__linux__) || defined(__unix__) || defined(__posix__)
+#  define OGLES_GPGPU_NIX 1
 #  define GL_GLEXT_PROTOTYPES 1
-#  include <GL/gl.h>
-#  include <GL/glext.h>
+#  if defined(OGLES_GPGPU_OPENGL_ES2)
+#    include <GLES2/gl2.h>
+#    include <GLES2/gl2ext.h>
+#  elif defined(OGLES_GPGPU_OPENGL_ES3)
+#    include <GLES3/gl3.h>
+#    include <GLES3/gl3ext.h>
+#  else
+#    include <GL/gl.h>
+#    include <GL/glext.h>
+#  endif
 #else
 #  error platform not supported.
 #endif
 // clang-format on
 
 // clang-format off
-#ifdef ANDROID
+#if defined(ANDROID) || defined(OGLES_GPGPU_NIX)
 #  define OGLES_GPGPU_TEXTURE_FORMAT GL_RGBA
+#  define OGLES_GPGPU_RGBA_FORMAT 1
 #else
 #  define OGLES_GPGPU_TEXTURE_FORMAT GL_BGRA
+#  define OGLES_GPGPU_RGBA_FORMAT 0
 #endif
 
 #if defined(OGLES_GPGPU_OPENGL_ES3)

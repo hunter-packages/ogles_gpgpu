@@ -32,23 +32,25 @@
 
 #include "../platform/opengl/gl_includes.h"
 
-#if defined(OGLES_GPGPU_IOS) && !defined(OGLES_GPGPU_OPENGL_ES3)
-#  include "../platform/ios/gl_includes.h"
+#if defined(OGLES_GPGPU_IOS)
 #  include "macros.h"
 #elif defined(OGLES_GPGPU_ANDROID) && !defined(OGLES_GPGPU_OPENGL_ES3)
+// NOTE: The GraphicsBuffer acceleration tricks don't work in recent
+// Android versions and are only relevant in OpenGL ES 2.0
 #  include "../platform/android/gl_includes.h"
 #  include "../platform/android/macros.h"
 #  include "../platform/android/egl.h"
 #else
-#  define OGLES_GPGPU_OPENGL 1
 #  include "../platform/opengl/gl_includes.h"
 #  include "macros.h"
 #endif
 // clang-format on
 
 // clang-format off
-#if defined(OGLES_GPGPU_ANDROID) || defined(OGLES_GPGPU_IOS)
+#if defined(OGLES_GPGPU_OPENGL_ES2) || defined(OGLES_GPGPU_OPENGL_ES3)
 #  define OGLES_GPGPU_OPENGLES 1
+#else
+#  define OGLES_GPGPU_OPENGL 1
 #endif
 // clang-format on
 

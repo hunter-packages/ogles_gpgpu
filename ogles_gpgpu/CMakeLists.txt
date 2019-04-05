@@ -11,6 +11,29 @@ endif()
 ## Dependencies - OpenGL stuff
 ## #################################################################
 
+#
+# generate permanent preprocessor defs via gl_definitions.h
+#
+
+if(OGLES_GPGPU_OPENGL_ES2)
+  set(OGLES_GPGPU_OPENGL_ES2_FLAG 1)
+  set(OGLES_GPGPU_OPENGL_ES3_FLAG 0)
+elseif(OGLES_GPGPU_OPENGL_ES3)
+  set(OGLES_GPGPU_OPENGL_ES2_FLAG 0)
+  set(OGLES_GPGPU_OPENGL_ES3_FLAG 1)
+else()
+  set(OGLES_GPGPU_OPENGL_ES2_FLAG 0)
+  set(OGLES_GPGPU_OPENGL_ES3_FLAG 0)
+endif()
+set(gl_config_dir "${CMAKE_CURRENT_BINARY_DIR}/platform/opengl")
+set(gl_config_header "${gl_config_dir}/gl_definitions.h")
+configure_file("platform/opengl/gl_definitions.h.in" "${gl_config_header}" @ONLY)
+
+target_include_directories(ogles_gpgpu
+  PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/platform>"
+)
+
 if(APPLE)
   find_package(imageio REQUIRED)
   find_package(corefoundation REQUIRED)
@@ -84,17 +107,9 @@ else()
     set_property(TARGET ogles_gpgpu_cpu PROPERTY FOLDER "libs/ogles_gpgpu")
     target_include_directories(
       ogles_gpgpu_cpu PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
-      )
-
-    if(OGLES_GPGPU_OPENGL_ES3)
-      target_compile_definitions(ogles_gpgpu_cpu PUBLIC OGLES_GPGPU_OPENGL_ES3=1)
-    endif()
+    )
 
   endif()
-
-  # Link epxported ogles_gpgpu with the stanrda OpenGL lib
-  find_package(OpenGL REQUIRED)
-  target_link_libraries(ogles_gpgpu PUBLIC OpenGL::GL)
 
   if(MSVC)
     # ogles_gpgpu/platform/opengl/gl_includes.h: #include <gl/glew.h>
@@ -106,14 +121,21 @@ else()
   endif()
 endif()
 
+if(OGLES_GPGPU_OPENGL_ES2)
+  find_package(gles2 REQUIRED)
+  target_link_libraries(ogles_gpgpu PUBLIC gles2::gles2)
+elseif(OGLES_GPGPU_OPENGL_ES3)
+  find_package(gles3 REQUIRED)
+  target_link_libraries(ogles_gpgpu PUBLIC gles3::gles3)
+else()
+  find_package(OpenGL REQUIRED)
+  target_link_libraries(ogesl_gpgpu PUBLIC OpenGL::GL)
+endif()
+
 set_property(TARGET ogles_gpgpu PROPERTY FOLDER "libs/ogles_gpgpu")
 target_include_directories(
     ogles_gpgpu PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
-    )
-
-if(OGLES_GPGPU_OPENGL_ES3)
-  target_compile_definitions(ogles_gpgpu PUBLIC OGLES_GPGPU_OPENGL_ES3=1)
-endif()
+)
 
 ## #################################################################
 ## Testing:
@@ -167,6 +189,11 @@ install(
     FILES
     ${OGLES_GPGPU_PUBLIC_HDRS}
     DESTINATION "${include_install_dir}/${PROJECT_NAME}"
+)
+
+install(
+  FILES "${gl_config_header}"
+  DESTINATION "${include_install_dir}/${PROJECT_NAME}/platform/opengl/"
 )
 
 install(

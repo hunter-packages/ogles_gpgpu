@@ -21,12 +21,6 @@
 
 BEGIN_OGLES_GPGPU
 
-#if __ANDROID__
-#define DFLT_PIX_FORMAT GL_RGBA
-#else
-#define DFLT_PIX_FORMAT GL_BGRA
-#endif
-
 struct FrameInput {
     FrameInput() {}
     FrameInput(const Size2d& size, void* pixelBuffer, bool useRawPixels, GLuint inputTexture, GLenum textureFormat)
@@ -62,11 +56,11 @@ public:
 
     void init(void* glContext);
 
-    void configure(const Size2d& size, GLenum inputPixFormat = DFLT_PIX_FORMAT);
+    void configure(const Size2d& size, GLenum inputPixFormat = OGLES_GPGPU_TEXTURE_FORMAT);
 
     void operator()(const FrameInput& frame);
 
-    void operator()(const Size2d& size, void* pixelBuffer, bool useRawPixels, GLuint inputTexture = 0, GLenum inputPixFormat = DFLT_PIX_FORMAT);
+    void operator()(const Size2d& size, void* pixelBuffer, bool useRawPixels, GLuint inputTexture = 0, GLenum inputPixFormat = OGLES_GPGPU_TEXTURE_FORMAT);
 
     virtual void preConfig() {}
 
