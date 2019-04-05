@@ -29,11 +29,6 @@ set(gl_config_dir "${CMAKE_CURRENT_BINARY_DIR}/platform/opengl")
 set(gl_config_header "${gl_config_dir}/gl_definitions.h")
 configure_file("platform/opengl/gl_definitions.h.in" "${gl_config_header}" @ONLY)
 
-target_include_directories(ogles_gpgpu
-  PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/platform>"
-)
-
 if(APPLE)
   find_package(imageio REQUIRED)
   find_package(corefoundation REQUIRED)
@@ -106,7 +101,10 @@ else()
 
     set_property(TARGET ogles_gpgpu_cpu PROPERTY FOLDER "libs/ogles_gpgpu")
     target_include_directories(
-      ogles_gpgpu_cpu PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
+      ogles_gpgpu_cpu
+      PUBLIC
+      "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
+      "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/platform>" # gl_definitions.h
     )
 
   endif()
@@ -138,7 +136,10 @@ endif()
 
 set_property(TARGET ogles_gpgpu PROPERTY FOLDER "libs/ogles_gpgpu")
 target_include_directories(
-    ogles_gpgpu PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
+  ogles_gpgpu
+  PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/platform>" # gl_definitions.h
 )
 
 ## #################################################################
