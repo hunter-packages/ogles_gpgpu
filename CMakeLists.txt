@@ -14,6 +14,8 @@ HunterGate(
   LOCAL
   )
 
+project(ogles_gpgpu VERSION 0.3.7)
+
 # !!! Make sure option OGLES_GPGPU_OPENG_ES3 occurs prior to the first
 # hunter_add_package() call.  This will allow us to modify settings
 # in dependencies appropriately (see cmake/Hunter/config.cmake)
@@ -36,12 +38,6 @@ if(OGLES_GPGPU_OPENGL_ES2 AND OGLES_GPGPU_OPENGL_ES3)
   )
 endif()
 
-project(ogles_gpgpu VERSION 0.3.7)
-
-hunter_add_package(check_ci_tag)
-find_package(check_ci_tag CONFIG REQUIRED)
-check_ci_tag()
-
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 string(COMPARE EQUAL "${CMAKE_SYSTEM_NAME}" "Linux" is_linux)
@@ -51,6 +47,10 @@ option(OGLES_GPGPU_INSTALL "Perform installation" ON)
 option(OGLES_GPGPU_VERBOSE "Perform per filter logging" OFF)
 option(OGLES_GPGPU_BUILD_TESTS "Build shader unit tests" OFF)
 option(OGLES_GPGPU_USE_OSMESA "Use MESA CPU OpenGL (via glfw)" OFF)
+
+hunter_add_package(check_ci_tag)
+find_package(check_ci_tag CONFIG REQUIRED)
+check_ci_tag()
 
 # See: cmake/Hunter/config.cmake
 hunter_add_package(sugar)

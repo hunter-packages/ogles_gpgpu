@@ -129,7 +129,7 @@ elseif(OGLES_GPGPU_OPENGL_ES3)
   target_link_libraries(ogles_gpgpu PUBLIC gles3::gles3)
 else()
   find_package(OpenGL REQUIRED)
-  target_link_libraries(ogesl_gpgpu PUBLIC OpenGL::GL)
+  target_link_libraries(ogles_gpgpu PUBLIC OpenGL::GL)
 endif()
 
 set_property(TARGET ogles_gpgpu PROPERTY FOLDER "libs/ogles_gpgpu")
