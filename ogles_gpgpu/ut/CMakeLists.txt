@@ -1,6 +1,25 @@
 set(test_name OGLES_GPGPU_Test)
 set(test_app test-ogles_gpgpu)
 
+# Use GTest as unit test framework
+hunter_add_package(GTest)
+find_package(GTest CONFIG REQUIRED)
+list(APPEND OGLES_GPGPU_TEST_LIBS GTest::gtest)
+
+# Use aglet for portable lightweight off screen opengl context
+hunter_add_package(aglet)
+find_package(aglet CONFIG REQUIRED)
+list(APPEND OGLES_GPGPU_TEST_LIBS aglet::aglet)
+
+# Use gauze for cross platform ctesting
+hunter_add_package(gauze)
+find_package(gauze CONFIG REQUIRED)
+list(APPEND OGLES_GPGPU_TEST_LIBS gauze::gauze)
+
+hunter_add_package(OpenCV)
+find_package(OpenCV REQUIRED)
+list(APPEND OGLES_GPGPU_TEST_LIBS "${OpenCV_LIBS}")
+
 add_executable(${test_app} test-ogles_gpgpu.cpp)
 
 if(TARGET ogles_gpgpu_cpu)

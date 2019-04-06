@@ -9,16 +9,34 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
 
 include("cmake/HunterGate.cmake")
 HunterGate(
-  URL "https://github.com/ruslo/hunter/archive/v0.22.13.tar.gz"
-  SHA1 "8b361d14d17c3526d41ecb62b6e905bdd9f3ee1d"
+  URL "https://github.com/ruslo/hunter/archive/v0.23.151.tar.gz"
+  SHA1 "68657b81508c2d3c248731b5a0c2125f19866721"
   LOCAL
-)
+  )
 
-project(ogles_gpgpu VERSION 0.3.6)
+project(ogles_gpgpu VERSION 0.3.7)
 
-hunter_add_package(check_ci_tag)
-find_package(check_ci_tag CONFIG REQUIRED)
-check_ci_tag()
+# !!! Make sure option OGLES_GPGPU_OPENG_ES3 occurs prior to the first
+# hunter_add_package() call.  This will allow us to modify settings
+# in dependencies appropriately (see cmake/Hunter/config.cmake)
+
+if(IOS OR ANDROID)
+  set(ogles_gpgpu_opengl_es2_dflt ON)
+  set(ogles_gpgpu_opengl_es3_dflt OFF)
+else()
+  set(ogles_gpgpu_opengl_es2_dflt OFF)
+  set(ogles_gpgpu_opengl_es3_dflt OFF)
+endif()
+
+option(OGLES_GPGPU_OPENGL_ES2 "Use OpenGL ES 2.0" ${ogles_gpgpu_opengl_es2_dflt})
+option(OGLES_GPGPU_OPENGL_ES3 "Use OpenGL ES 3.0" ${ogles_gpgpu_opengl_es3_dflt})
+option(OGLES_GPGPU_USE_EGL "Use EGL to manage the context (supports ES)" OFF)
+
+if(OGLES_GPGPU_OPENGL_ES2 AND OGLES_GPGPU_OPENGL_ES3)
+  message(FATAL_ERROR
+    "OGLES_GPGPU_OPENGL_ES2 and OGLES_GPGPU_OPENGL_ES3 are mutually exclusive"
+  )
+endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -30,10 +48,9 @@ option(OGLES_GPGPU_VERBOSE "Perform per filter logging" OFF)
 option(OGLES_GPGPU_BUILD_TESTS "Build shader unit tests" OFF)
 option(OGLES_GPGPU_USE_OSMESA "Use MESA CPU OpenGL (via glfw)" OFF)
 
-# !!! Make sure option OGLES_GPGPU_OPENG_ES3 occurs prior to the first
-# hunter_add_package() call.  This will allow us to modify settings
-# in dependencies appropriately (see cmake/Hunter/config.cmake)
-option(OGLES_GPGPU_OPENGL_ES3 "Use OpenGL ES 3.0" OFF)
+hunter_add_package(check_ci_tag)
+find_package(check_ci_tag CONFIG REQUIRED)
+check_ci_tag()
 
 # See: cmake/Hunter/config.cmake
 hunter_add_package(sugar)
@@ -71,37 +88,11 @@ endif()
 # but they may only be run on platforms where an OpenGL context
 # is available
 if(OGLES_GPGPU_BUILD_TESTS)
-
   if(IOS AND DRISHTI_CI)
     # do not run test on CI (TODO: remote device testing)
   else()
     enable_testing()
   endif()
-
-  # Use GTest as unit test framework
-  hunter_add_package(GTest)
-  find_package(GTest CONFIG REQUIRED)
-  list(APPEND OGLES_GPGPU_TEST_LIBS GTest::gtest)
-
-  if(MSVC)
-    # TODO: Temporary aglet fix for appveyor?  Shouldn't be needed.
-    hunter_add_package(glew)
-    find_package(glew CONFIG REQUIRED)
-  endif()
-
-  # Use aglet for portable lightweight off screen opengl context
-  hunter_add_package(aglet)
-  find_package(aglet CONFIG REQUIRED)
-  list(APPEND OGLES_GPGPU_TEST_LIBS aglet::aglet)
-
-  # Use gauze for cross platform ctesting
-  hunter_add_package(gauze)
-  find_package(gauze CONFIG REQUIRED)
-  list(APPEND OGLES_GPGPU_TEST_LIBS gauze::gauze)
-
-  hunter_add_package(OpenCV)
-  find_package(OpenCV REQUIRED)
-  list(APPEND OGLES_GPGPU_TEST_LIBS "${OpenCV_LIBS}")
 endif()
 
 ## #################################################################

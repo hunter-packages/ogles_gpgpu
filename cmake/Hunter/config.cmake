@@ -17,16 +17,16 @@ if(OGLES_GPGPU_USE_OSMESA)
   hunter_config(glfw VERSION ${HUNTER_glfw_VERSION} CMAKE_ARGS GLFW_USE_OSMESA=ON)
 endif()
 
-# Note: Aglet is currently used to provide an OpenGL context for the unit tests
-# We need to make sure it is configured appropriately to provide one of:
-# * OpenGL ES 3.0 (or OpenGL 3.0)
-# * OpenGL ES 2.0
-# The context must be allocated approprately and we need to pull in the correct
-# set of headers with mixing them.
-if(OGLES_GPGPU_OPENGL_ES3)
-  set(aglet_es3 ON)
-else()
-  set(aglet_es3 OFF)
-endif()
+message("AGLET_OPENGL_ES3=${OGLES_GPGPU_OPENGL_ES3}")
 
-hunter_config(aglet VERSION ${HUNTER_aglet_VERSION} CMAKE_ARGS AGLET_OPENGL_ES3=${aglet_es3})
+set(aglet_url "https://github.com/elucideye/aglet/archive/v1.3.3.tar.gz")
+set(aglet_sha1 432ad86638c30d221ad444ab73af214c2fe5a180)
+set(aglet_args
+  "AGLET_USE_EGL=${OGLES_GPGPU_USE_EGL}"
+  "AGLET_OPENGL_ES2=${OGLES_GPGPU_OPENGL_ES2}"
+  "AGLET_OPENGL_ES3=${OGLES_GPGPU_OPENGL_ES3}"
+)
+
+#hunter_config(aglet VERSION ${HUNTER_aglet_VERSION} CMAKE_ARGS AGLET_OPENGL_ES3=${aglet_es3})
+hunter_config(aglet URL ${aglet_url} SHA1 ${aglet_sha1} CMAKE_ARGS ${aglet_args})
+

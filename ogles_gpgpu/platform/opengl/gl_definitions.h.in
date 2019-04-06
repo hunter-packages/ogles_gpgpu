@@ -1,0 +1,19 @@
+/*!
+ * @file gl_definitions.h.in
+ * @brief OpenGL definitions
+ *
+ * OpenGL version definitions
+ */
+
+#ifndef OGLES_GPGPU_GL_DEFINITIONS_H
+#define OGLES_GPGPU_GL_DEFINITIONS_H
+
+#if @OGLES_GPGPU_OPENGL_ES2_FLAG@
+#  define OGLES_GPGPU_OPENGL_ES2
+#elif @OGLES_GPGPU_OPENGL_ES3_FLAG@
+#  define OGLES_GPGPU_OPENGL_ES3
+#endif
+
+#endif //  OGLES_GPGPU_GL_DEFINITIONS_H
+
+
