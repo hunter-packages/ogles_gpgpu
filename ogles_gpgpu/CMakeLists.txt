@@ -104,7 +104,7 @@ else()
       ogles_gpgpu_cpu
       PUBLIC
       "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
-      "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/platform>" # gl_definitions.h
+      "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/..>" # gl_definitions.h
     )
 
   endif()
@@ -139,8 +139,9 @@ target_include_directories(
   ogles_gpgpu
   PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/platform>" # gl_definitions.h
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/..>" # gl_definitions.h
 )
+
 
 ## #################################################################
 ## Testing:

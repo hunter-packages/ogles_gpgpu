@@ -16,7 +16,7 @@
 
 // clang-format off
 
-#include "../platform/opengl/gl_definitions.h"
+#include "ogles_gpgpu/platform/opengl/gl_definitions.h"
 
 //define something for Windows (64-bit)
 #if defined(_WIN32) || defined(_WIN64)
