@@ -359,8 +359,9 @@ void Core::getOutputData(unsigned char* buf) {
 #pragma mark helper methods
 
 void Core::checkGLExtensions() {
+
     // get string with extensions seperated by a SPACE
-    string glExtString((const char*)glGetString(GL_EXTENSIONS));
+    std::string glExtString = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
 
     // get extensions as vector
     vector<string> glExt = Tools::split(glExtString);
