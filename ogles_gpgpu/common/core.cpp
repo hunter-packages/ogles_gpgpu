@@ -361,7 +361,11 @@ void Core::getOutputData(unsigned char* buf) {
 void Core::checkGLExtensions() {
 
     // get string with extensions seperated by a SPACE
-    std::string glExtString = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
+    std::string glExtString;
+    const auto * extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
+    if(extensions != nullptr) {
+        glExtString = extensions;
+    }
 
     // get extensions as vector
     vector<string> glExt = Tools::split(glExtString);

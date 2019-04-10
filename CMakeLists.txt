@@ -14,7 +14,7 @@ HunterGate(
   LOCAL
   )
 
-project(ogles_gpgpu VERSION 0.3.9)
+project(ogles_gpgpu VERSION 0.3.10)
 
 # !!! Make sure option OGLES_GPGPU_OPENG_ES3 occurs prior to the first
 # hunter_add_package() call.  This will allow us to modify settings
